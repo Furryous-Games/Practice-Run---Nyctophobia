@@ -1,10 +1,7 @@
-[gd_scene load_steps=15 format=3 uid="uid://bn6ku55hacl74"]
+[gd_scene load_steps=14 format=3 uid="uid://bn6ku55hacl74"]
 
-[ext_resource type="Script" uid="uid://dx3oxv2hrkqpr" path="res://scripts/player.gd" id="1_3vyb7"]
-[ext_resource type="Texture2D" uid="uid://dowa1opmxjpww" path="res://assets/sprites/CharacterModels.png" id="2_g2els"]
-
-[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_3vyb7"]
-friction = 0.0
+[ext_resource type="Script" uid="uid://dx3oxv2hrkqpr" path="res://Scripts/player.gd" id="1_3vyb7"]
+[ext_resource type="Texture2D" uid="uid://dowa1opmxjpww" path="res://Assets/sprites/CharacterModels.png" id="2_g2els"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_g2els"]
 atlas = ExtResource("2_g2els")
@@ -103,11 +100,13 @@ animations = [{
 z_index = 1
 script = ExtResource("1_3vyb7")
 
-[node name="AnimatableBody2D" type="AnimatableBody2D" parent="."]
-physics_material_override = SubResource("PhysicsMaterial_3vyb7")
-sync_to_physics = false
-
-[node name="Sprite2D" type="AnimatedSprite2D" parent="AnimatableBody2D"]
+[node name="Player Sprite" type="AnimatedSprite2D" parent="."]
 position = Vector2(10, 10)
 sprite_frames = SubResource("SpriteFrames_3v2ag")
 animation = &"walk_up"
+
+[node name="Walk Cooldown" type="Timer" parent="."]
+wait_time = 0.2
+one_shot = true
+
+[connection signal="timeout" from="Walk Cooldown" to="." method="_on_walk_cooldown_timeout"]
