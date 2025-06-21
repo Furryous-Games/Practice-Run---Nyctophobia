@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d2nvyfnik0rhk"
-path="res://.godot/imported/roomTileset.png-621fcc3c9b70a510fd0f88b827ead415.ctex"
+uid="uid://dowa1opmxjpww"
+path="res://.godot/imported/CharacterModels.png-a0da8315306321a8c998444f646d1872.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://Assets/Art/roomTileset.png"
-dest_files=["res://.godot/imported/roomTileset.png-621fcc3c9b70a510fd0f88b827ead415.ctex"]
+source_file="res://assets/sprites/CharacterModels.png"
+dest_files=["res://.godot/imported/CharacterModels.png-a0da8315306321a8c998444f646d1872.ctex"]
 
 [params]
 

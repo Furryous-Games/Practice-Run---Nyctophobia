@@ -10,9 +10,9 @@ config_version=5
 
 [application]
 
-config/name="Game Jam Test Run -- Instability"
-run/main_scene="res://Scenes/nyctophobia_game.tscn"
-config/features=PackedStringArray("4.3", "Forward Plus")
+config/name="Instability: Nyctophobia"
+run/main_scene="res://scenes/nyctophobia_game.tscn"
+config/features=PackedStringArray("4.4", "Forward Plus")
 config/icon="res://icon.svg"
 
 [display]
