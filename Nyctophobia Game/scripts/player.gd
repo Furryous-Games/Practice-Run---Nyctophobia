@@ -53,18 +53,11 @@ func _input(event: InputEvent) -> void:
 		# Stores the inputed vector2 position change and directional movement 
 		var expected_movement := [
 			Vector2i(
-				int(Input.get_axis(&"move_left", &"move_right")), 
-				int(Input.get_axis(&"move_up", &"move_down"))
+				int(Input.get_axis(&"move_left", &"move_right")) if dir in [&"move_left", &"move_right"] else 0,
+				int(Input.get_axis(&"move_up", &"move_down")) if dir in [&"move_up", &"move_down"] else 0
 			), 
 			dir
 		]
-		
-		# Prevents diagonal movement by shifting it to match direction of the previous input
-		if 0 not in [expected_movement[0].x, expected_movement[0].y]:
-			if dir in [&"move_up", &"move_down"]:
-				expected_movement[0].x = 0
-			else:
-				expected_movement[0].y = 0
 		
 		# Checks to ensure that the expected tile is clear
 		var expected_tile_pos = player_pos + expected_movement[0]
@@ -117,10 +110,10 @@ func move_player() -> void:
 		
 		# Sets the animation according to the direction of the input
 		match next_movement[1]:
-			"move_up": player_sprite.animation = "walk_up"
-			"move_down": player_sprite.animation = "walk_down"
-			"move_left": player_sprite.animation = "walk_left"
-			"move_right": player_sprite.animation = "walk_right"
+			&"move_up": player_sprite.animation = "walk_up"
+			&"move_down": player_sprite.animation = "walk_down"
+			&"move_left": player_sprite.animation = "walk_left"
+			&"move_right": player_sprite.animation = "walk_right"
 		player_sprite.frame = 1
 		
 		# Clears the player's next movement
