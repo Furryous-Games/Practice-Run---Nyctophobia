@@ -110,6 +110,9 @@ func move_player() -> void:
 		# Clears the player's next movement
 		next_movement = null
 		walk_cooldown.start()
+		
+		# Updates the room's shadows
+		main_script.shadow_tilemap.update_shadows()
 
 func _on_walk_cooldown_timeout() -> void:
 	player_sprite.frame = 0

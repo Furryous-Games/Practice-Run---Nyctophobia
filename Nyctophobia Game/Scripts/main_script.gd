@@ -1,6 +1,8 @@
 extends Node
 
 @onready var room_tilemap: TileMap = $"../Tile Sets/Room Tilemap"
+@onready var shadow_tilemap: TileMapLayer = $"../Tile Sets/Shadow Tilemap"
+
 @onready var player: Node2D = $"../Player"
 @onready var camera: Camera2D = $"../Camera"
 
@@ -15,12 +17,16 @@ const house_size = 2
 const room_size_x = 11
 const room_size_y = 9
 
+# Holds information regarding the default room lighting
+var room_lighting = 4 # 6
+
 # Holds information for moving the camera around
 const original_camera_pos = Vector2(110, 90)
 
 # Defines what each atlas coord is in terms of building type
 const building_type_by_atlas_coords = {
-	"wall": [Vector2i(0, 1), Vector2i(1, 1), Vector2i(4, 1), Vector2i(0, 2), Vector2i(4, 2), Vector2i(0, 5), Vector2i(1, 5), Vector2i(4, 5)],
+	"wall": [Vector2i(1, 1), Vector2i(0, 2), Vector2i(4, 2), Vector2i(1, 5), Vector2i(10, 1), Vector2i(11, 1)],
+	"wall_corner": [Vector2i(0, 1), Vector2i(4, 1), Vector2i(0, 5), Vector2i(4, 5)],
 	"floor": [Vector2i(1, 2), Vector2i(2, 2), Vector2i(3, 2), Vector2i(1, 3), Vector2i(2, 3), Vector2i(3, 3), Vector2i(1, 4), Vector2i(2, 4), Vector2i(3, 4)],
 	"window": [Vector2i(2, 1), Vector2i(0, 3), Vector2i(4, 3), Vector2i(2, 5)],
 	"door_n": [Vector2i(3, 1)], 
@@ -33,6 +39,7 @@ const building_type_by_atlas_coords = {
 func _ready() -> void:
 	# Provides a pointer to the main script for the player
 	player.main_script = self
+	shadow_tilemap.main_script = self
 	
 	# Sets up the house grid to be a square 2D list
 	for y in range(house_size):
@@ -49,7 +56,7 @@ func _ready() -> void:
 				for x in range(room_size_x):
 					# Creates a default tile within the room
 					house_grid[room_y][room_x][-1].append({
-						"brightness": 5,
+						"brightness": 6,
 						"object": null,
 						"interactable": null,
 						"type": null,
@@ -81,8 +88,17 @@ func _ready() -> void:
 					
 					# Sets the found tile type in the house grid
 					house_grid[house_y][house_x][room_y][room_x]["type"] = tile_type
+					
+					
+					# TEST
+					if tile_type == "floor":
+						house_grid[house_y][house_x][room_y][room_x]["brightness"] = (randi()) % 6 + 1
+	
+	
+	shadow_tilemap.update_shadows()
 
 
+# Change room functions
 func move_to_room(new_room, door_entered) -> void:
 	# Checks if the door is valid and unlocked
 	if (
@@ -121,6 +137,9 @@ func move_to_room(new_room, door_entered) -> void:
 		
 		# Update the current room to the new room
 		curr_room = new_room
+		
+		# Update the shadows of the new room
+		shadow_tilemap.update_shadows()
 		
 	else:
 		print("The door is locked!")
