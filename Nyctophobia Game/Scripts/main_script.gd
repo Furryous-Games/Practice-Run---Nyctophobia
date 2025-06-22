@@ -18,7 +18,8 @@ const room_size_x = 11
 const room_size_y = 9
 
 # Holds information regarding the default room lighting
-var room_lighting = 4 # 6
+var room_lighting = 6 # 6
+var window_emission = 1 # 1
 
 # Holds information for moving the camera around
 const original_camera_pos = Vector2(110, 90)
@@ -147,11 +148,13 @@ func move_to_room(new_room, door_entered) -> void:
 func get_door_location_in_room(room_pos, door_direction) -> Vector2:
 	var new_room_grid = house_grid[room_pos.y][room_pos.x]
 	
+	# Searches the room for the specified door
 	for room_y in range(len(new_room_grid)):
 		for room_x in range(len(new_room_grid[room_y])):
 			if new_room_grid[room_y][room_x]["type"] == door_direction:
 				return Vector2(room_x, room_y)
 	
+	# Returns -1 -1 as an error
 	return Vector2(-1, -1)
 
 
