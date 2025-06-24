@@ -3,8 +3,6 @@ extends Node2D
 # Sets the player spawn coordinates, (5, 4) is the center of a 11x9 room
 const PLAYER_SPAWN = Vector2i(5, 4)
 
-var main_script = null
-
 # Stores the player's position in relation to the tiles
 var player_pos: Vector2i
 
@@ -17,6 +15,7 @@ var executing := false
 # Stores the next input given while the current movement is being executed
 var next_movement = null
 
+@onready var main_script: Node = $"../"
 @onready var player_sprite: AnimatedSprite2D = $"PlayerSprite"
 @onready var walk_cooldown: Timer = $"WalkCooldown"
 
@@ -74,7 +73,7 @@ func _input(event: InputEvent) -> void:
 		move_player()
 	
 	# Handles events for when an interact key is pressed
-	elif Input.is_action_pressed("interact"):
+	elif Input.is_action_pressed(&"interact"):
 		var expected_tile_pos
 		var expected_tile_metadata
 		
@@ -93,7 +92,7 @@ func _input(event: InputEvent) -> void:
 			# Checks if the object is a door
 			if expected_tile_metadata["type"] in door_room_change.keys():
 				var expected_room = main_script.curr_room + door_room_change[expected_tile_metadata["type"]]
-				print("There is a door here!")
+				#print("There is a door here!")
 				main_script.move_to_room(expected_room, expected_tile_metadata["type"])
 				break
 

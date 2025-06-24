@@ -2,17 +2,13 @@ extends TileMapLayer
 
 const SHADOW_CHECKS = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
 
-var main_script = null
 var room_metadata
 
+@onready var main_script: Node = $"../../"
 
 func update_shadows():
-	# Determines the global location of the player
-	var true_player_pos = Vector2i( (main_script.curr_room.x * 12) + main_script.player.player_pos.x, (main_script.curr_room.y * 10) + main_script.player.player_pos.y )
-	
 	# Updates the metadata for the current room
 	room_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]]
-	var tile_true_location
 	
 	# Resets the shadows within the room
 	reset_shadows()
@@ -20,7 +16,6 @@ func update_shadows():
 	# Initializes variables for the update
 	var lowest_shadow_value
 	var new_tile_location
-	var new_true_tile_location
 	var previous_room
 	
 	# Sets the emissions for sources
@@ -38,7 +33,6 @@ func update_shadows():
 				if previous_room[room_y][room_x]["type"] == "floor":
 					# Resets the lowest shadow value and determines the global tile location of the tile in the room
 					lowest_shadow_value = null
-					tile_true_location = Vector2i( (main_script.curr_room.x * 12) + room_x, (main_script.curr_room.y * 10) + room_y )
 					
 					# Loops over the surrounding tiles
 					for floor_check in SHADOW_CHECKS:
@@ -77,7 +71,6 @@ func update_shadows():
 			if room_metadata[room_y][room_x]["type"] != "floor" and room_metadata[room_y][room_x]["type"] != null:
 				# Resets the lowest shadow value and determines the global tile location of the tile in the room
 				lowest_shadow_value = null
-				tile_true_location = Vector2i( (main_script.curr_room.x * 12) + room_x, (main_script.curr_room.y * 10) + room_y )
 				
 				# Loops over the surrounding tiles
 				for floor_check in SHADOW_CHECKS:
@@ -112,7 +105,6 @@ func update_shadows():
 			if room_metadata[room_y][room_x]["type"] != "floor" and room_metadata[room_y][room_x]["type"] != null:
 				# Resets the lowest shadow value and determines the global tile location of the tile in the room
 				lowest_shadow_value = null
-				tile_true_location = Vector2i( (main_script.curr_room.x * 12) + room_x, (main_script.curr_room.y * 10) + room_y )
 				
 				# Loops over the surrounding tiles
 				for floor_check in SHADOW_CHECKS:
@@ -150,8 +142,6 @@ func reset_shadows():
 
 
 func set_emissions():
-	var tile_true_location
-	var tile_brightness
 	var new_tile_location
 	
 	# Sets the emissions for light sources
@@ -160,7 +150,6 @@ func set_emissions():
 			# Only affects window tiles
 			if room_metadata[room_y][room_x]["type"] == "window":
 				# Determines the global tile location of the tile in the room
-				tile_true_location = Vector2i( (main_script.curr_room.x * 12) + room_x, (main_script.curr_room.y * 10) + room_y )
 				
 				# Loops over the surrounding tiles
 				for floor_check in SHADOW_CHECKS:
@@ -180,7 +169,6 @@ func set_emissions():
 
 func draw_shadows():
 	var tile_true_location
-	var tile_brightness
 	
 	# Change the shadows for the floors
 	for room_y in range(len(room_metadata)):

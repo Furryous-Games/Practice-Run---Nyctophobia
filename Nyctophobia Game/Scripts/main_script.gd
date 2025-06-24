@@ -30,19 +30,15 @@ var curr_room = Vector2i(0, 0)
 var room_lighting = 6 # 6
 var window_emission = 1 # 1
 
-@onready var room_tilemap: TileMapLayer = $"../TileSets/RoomTilemap"
-@onready var shadow_tilemap: TileMapLayer = $"../TileSets/ShadowTilemap"
+@onready var room_tilemap: TileMapLayer = $"TileSets/RoomTileMap"
+@onready var shadow_tilemap: TileMapLayer = $"TileSets/ShadowTileMap"
 
-@onready var player: Node2D = $"../Player"
-@onready var camera: Camera2D = $"../Camera"
+@onready var player: Node2D = $"Player"
+@onready var camera: Camera2D = $"Camera"
 
 
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
-	# Provides a pointer to the main script for the player
-	player.main_script = self
-	shadow_tilemap.main_script = self
-	
 	# Sets up the house grid to be a square 2D list
 	for y in range(HOUSE_SIZE):
 		house_grid.append([])
@@ -96,12 +92,11 @@ func _ready() -> void:
 					if tile_type == "floor":
 						house_grid[house_y][house_x][room_y][room_x]["brightness"] = (randi()) % 6 + 1
 	
-	
 	shadow_tilemap.update_shadows()
 
 
 # Change room functions
-func move_to_room(new_room, door_entered) -> void:
+func move_to_room(new_room: Vector2i, door_entered: String) -> void:
 	# Checks if the door is valid and unlocked
 	if (
 			# Checks that the expected room is within bounds
@@ -112,30 +107,39 @@ func move_to_room(new_room, door_entered) -> void:
 	):
 		
 		# Defines what door for the program to search for when determining where to place the player in the new room
-		var new_door_direction = (
-			"door_n" if door_entered == "door_s"
-			else "door_e" if door_entered == "door_w"
-			else "door_s" if door_entered == "door_n"
-			else "door_w"
-		)
+		var new_door_dir: String
+		match door_entered:
+			"door_n": new_door_dir = "door_s"
+			"door_e": new_door_dir = "door_w"
+			"door_s": new_door_dir = "door_n"
+			"door_w": new_door_dir = "door_e"
 		
 		# Gets the location of the determined door in the new room
-		var new_room_door_location = get_door_location_in_room(new_room, new_door_direction)
+		var new_room_door_location: Vector2i = get_door_location_in_room(new_room, new_door_dir)
 		
 		# Defines the offset from the door depending on what type it is
-		var spawn_tile = new_room_door_location + ( 
-			Vector2i(0, -1) if door_entered == "door_n"
-			else Vector2i(1, 0) if door_entered == "door_e"
-			else Vector2i(0, 1) if door_entered == "door_s"
-			else Vector2i(-1, 0)
-		)
+		var spawn_tile: Vector2i = new_room_door_location
+		match door_entered:
+			"door_n": spawn_tile += Vector2i(0, -1)
+			"door_e": spawn_tile += Vector2i(1, 0)
+			"door_s": spawn_tile += Vector2i(0, 1)
+			"door_w": spawn_tile += Vector2i(-1, 0)
 		
 		# Updates the player's position
 		player.player_pos = spawn_tile
+		
 		# Stop any ongoing movements
-		player.tween_pos.stop()
+		player.tween_pos.kill()
+		
 		# Move the player's visual to the new location
 		player.position = (spawn_tile + Vector2i(new_room[0] * 12, new_room[1] * 10)) * 20
+		# BUG: performing (move_x + move_y + interact) actions as soon as the next input is accepted (WalkCooldown = 0.175s) \
+				# the player position is incorrectly changed when moving into another room:
+					# NW room, E door: (180.0, 40.0), bugged: (280.0, 60.0)
+					# NE room, W door: (260.0, 60.0), bugged: (160.0, 40.0)
+				
+				# player.tween_pos is not running
+				# the calculation for player.position is correct (NE-W bugged: (260.0, 60.0))
 		
 		# Update the camera's position to the new room
 		camera.position = ORIGINAL_CAMERA_POS + Vector2i(new_room[0] * 12 * 20, new_room[1] * 10 * 20)
@@ -146,11 +150,11 @@ func move_to_room(new_room, door_entered) -> void:
 		# Update the shadows of the new room
 		shadow_tilemap.update_shadows()
 		
-	else:
-		print("The door is locked!")
+	#else:
+		#print("The door is locked!")
 
 
-func get_door_location_in_room(room_pos, door_direction) -> Vector2i:
+func get_door_location_in_room(room_pos: Vector2i, door_direction: String) -> Vector2i:
 	var new_room_grid = house_grid[room_pos.y][room_pos.x]
 	
 	# Searches the room for the specified door
