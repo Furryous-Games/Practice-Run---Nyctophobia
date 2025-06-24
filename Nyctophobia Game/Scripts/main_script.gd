@@ -15,6 +15,38 @@ const BUILDING_TYPE_BY_ATLAS_COORDS = {
 	"door_s": [Vector2i(3, 5)]
 }
 
+const FURNITURE_TYPE_BY_ATLAS_COORDS = {
+	"book_shelf": {Vector2i(0, 7): [], Vector2i(1, 7): [], Vector2i(1, 8): [], Vector2i(3, 7): []},
+	"piano": {Vector2i(0, 9): [Vector2i(0, 1)], Vector2i(1, 9): [Vector2i(0, 1)], Vector2i(2, 9): [Vector2i(1, 0)], Vector2i(2, 10): [Vector2i(1, 0)]},
+	"small_chair": {Vector2i(4, 7): [], Vector2i(4, 8): [], Vector2i(4, 9): [], Vector2i(4, 10): []},
+	"bench": {Vector2i(7, 7): [Vector2i(0, 1)], Vector2i(8, 7): [Vector2i(0, 1)], Vector2i(9, 7): [Vector2i(1, 0)], Vector2i(9, 8): [Vector2i(1, 0)]},
+	"night_stand": {Vector2i(5, 7): []},
+	"small_night_stand": {Vector2i(5, 8): []},
+	"stool": {Vector2i(5, 9): []},
+	"plant": {Vector2i(5, 10): []},
+	"lamp": {Vector2i(6, 7): []},
+	
+	"bed": {
+		Vector2i(0, 15): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)], 
+		Vector2i(2, 15): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+		Vector2i(2, 17): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+		Vector2i(4, 15): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
+		},
+	"small_television": {Vector2i(6, 15): []},
+	
+	"countertop": {Vector2i(3, 12): []},
+	"sink": {Vector2i(4, 12): []},
+	"oven": {Vector2i(5, 12): []},
+	"fridge": {Vector2i(0, 12): []},
+	"dining_table": {Vector2i(1, 12): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]}
+}
+
+# Defines which objects can be walked through/over
+const WALKABLE_OBJECTS = ["book_shelf"]
+
+# Defines which objects are highlighted in the dark
+var highlighted_objects = ["lamp"]
+
 # Holds information about the size of the house in "rooms x rooms"
 const HOUSE_SIZE = 2
 
@@ -29,12 +61,16 @@ var curr_room = Vector2i(0, 0)
 # Holds information regarding the default room lighting
 var room_lighting = 6 # 6
 var window_emission = 1 # 1
+var lamp_emission = 2 # 2
 
 @onready var room_tilemap: TileMapLayer = $"TileSets/RoomTileMap"
+@onready var objects_tilemap: TileMapLayer = $TileSets/ObjectsTileMap
 @onready var shadow_tilemap: TileMapLayer = $"TileSets/ShadowTileMap"
 
 @onready var player: Node2D = $"Player"
 @onready var camera: Camera2D = $"Camera"
+
+@onready var object_classes: Node = $"Object Classes"
 
 
 # Called when the node enters the scene tree for the first time.
@@ -55,6 +91,7 @@ func _ready() -> void:
 					# Creates a default tile within the room
 					house_grid[room_y][room_x][-1].append({
 						"brightness": 6,
+						"object_type": null,
 						"object": null,
 						"interactable": null,
 						"type": null,
@@ -62,7 +99,6 @@ func _ready() -> void:
 	
 	# Creates variables to hold the atlas coords and tile type
 	var atlas_coords
-	var tile_type
 	
 	# Loops through all the rooms inside of the house
 	for house_y in range(HOUSE_SIZE):
@@ -70,33 +106,56 @@ func _ready() -> void:
 			# Loops through all the tiles in the room
 			for room_y in range(ROOM_SIZE_Y):
 				for room_x in range(ROOM_SIZE_X):
-					# Gets the tile from the tilemap
+					## Applies the physical building to the house grid
+					# Gets the tile from the room tilemap
 					atlas_coords = room_tilemap.get_cell_atlas_coords(Vector2i(
 						(house_x * (ROOM_SIZE_X + 1)) + room_x, 
 						(house_y * (ROOM_SIZE_Y + 1)) + room_y
 					))
-					# The default tile type is null
-					tile_type = null
 					
 					# Finds which type of building the tile is
 					for type in BUILDING_TYPE_BY_ATLAS_COORDS.keys():
 						if atlas_coords in BUILDING_TYPE_BY_ATLAS_COORDS[type]:
-							tile_type = type
+							# Sets the found tile type in the house grid
+							house_grid[house_y][house_x][room_y][room_x]["type"] = type
+							
 							break
 					
-					# Sets the found tile type in the house grid
-					house_grid[house_y][house_x][room_y][room_x]["type"] = tile_type
+					## Applies the furniture to the house grid
+					# Gets the tile from the room tilemap
+					atlas_coords = objects_tilemap.get_cell_atlas_coords(Vector2i(
+						(house_x * (ROOM_SIZE_X + 1)) + room_x, 
+						(house_y * (ROOM_SIZE_Y + 1)) + room_y
+					))
 					
-					
-					# TEST
-					if tile_type == "floor":
-						house_grid[house_y][house_x][room_y][room_x]["brightness"] = (randi()) % 6 + 1
+					# Finds which type of building the tile is
+					for type in FURNITURE_TYPE_BY_ATLAS_COORDS.keys():
+						if atlas_coords in FURNITURE_TYPE_BY_ATLAS_COORDS[type].keys():
+							# Creates a new object class for the object depending on its type
+							var furniture_object = object_classes.get_object_from_furniture_type(type)
+							
+							# Sets the found tile type in the house grid
+							house_grid[house_y][house_x][room_y][room_x]["object_type"] = type
+							house_grid[house_y][house_x][room_y][room_x]["object"] = furniture_object
+							
+							# Sets the connected tiles for the tile type in the house grid
+							for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
+								house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object_type"] = type
+							
+							break
 	
 	shadow_tilemap.update_shadows()
+	
+	var room_metadata = house_grid[curr_room[1]][curr_room[0]]
+	
+	
+	# Test
+	var new_lamp_object = object_classes.lamp_object.new()
+	print(new_lamp_object.type)
 
 
 # Change room functions
-func move_to_room(new_room: Vector2i, door_entered: String) -> void:
+func move_to_room(new_room: Vector2i, door_entered: String) -> bool:
 	# Checks if the door is valid and unlocked
 	if (
 			# Checks that the expected room is within bounds
@@ -150,8 +209,11 @@ func move_to_room(new_room: Vector2i, door_entered: String) -> void:
 		# Update the shadows of the new room
 		shadow_tilemap.update_shadows()
 		
-	#else:
-		#print("The door is locked!")
+		return true
+		
+	else:
+		print("The door is locked!")
+		return false
 
 
 func get_door_location_in_room(room_pos: Vector2i, door_direction: String) -> Vector2i:

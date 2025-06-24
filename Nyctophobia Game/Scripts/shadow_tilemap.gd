@@ -1,6 +1,6 @@
 extends TileMapLayer
 
-const SHADOW_CHECKS = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]
+const SHADOW_CHECKS = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, 0)]
 
 var room_metadata
 
@@ -45,7 +45,7 @@ func update_shadows():
 								and new_tile_location.x >= 0 
 								and new_tile_location.x < len(previous_room[new_tile_location.y])
 						):
-								# Checks if the checked tile is of type floor, and checks if the brightness is lower than the current lowest brightness
+							# Checks if the checked tile is of type floor, and checks if the brightness is lower than the current lowest brightness
 							if (
 									previous_room[new_tile_location.y][new_tile_location.x]["type"] == "floor"
 									and (lowest_shadow_value == null or previous_room[new_tile_location.y][new_tile_location.x]["brightness"] < lowest_shadow_value["brightness"])
@@ -62,7 +62,29 @@ func update_shadows():
 		set_emissions()
 	
 	# Caps the brightness of the tile the player is standing on to 5
-	room_metadata[main_script.player.player_pos.y][main_script.player.player_pos.x]["brightness"] = min(room_metadata[main_script.player.player_pos.y][main_script.player.player_pos.x]["brightness"], 5)
+	cap_tile_brightness(main_script.player.player_pos, 5)
+	
+	# Highlight tiles with objects on them close to the player
+	for floor_check in SHADOW_CHECKS:
+		# Determines the local position of the checked tile
+		new_tile_location = Vector2i(main_script.player.player_pos.x + floor_check.x, main_script.player.player_pos.y + floor_check.y)
+		# Checks if the tile is within the room, has an object on it, and is not walkable
+		if (
+				new_tile_location.y >= 0 
+				and new_tile_location.y < len(room_metadata)
+				and new_tile_location.x >= 0 
+				and new_tile_location.x < len(room_metadata[new_tile_location.y])
+				and room_metadata[new_tile_location.y][new_tile_location.x]["object_type"] != null
+				and room_metadata[new_tile_location.y][new_tile_location.x]["object_type"] not in main_script.WALKABLE_OBJECTS
+		):
+			# Highlight the object's tile
+			cap_tile_brightness(new_tile_location, 5)
+	
+	# Highlight important objects as defined in the main script
+	for room_y in range(len(previous_room)):
+		for room_x in range(len(previous_room[room_y])):
+			if previous_room[room_y][room_x]["object_type"] in main_script.highlighted_objects:
+				cap_tile_brightness(Vector2i(room_x, room_y), 5)
 	
 	# Update the shadows for the walls
 	for room_y in range(len(room_metadata)):
@@ -89,7 +111,7 @@ func update_shadows():
 								and (lowest_shadow_value == null or room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] <= lowest_shadow_value["brightness"])
 						):
 							# Sets the current lowest brightness to the new lowest brightness
-							lowest_shadow_value = room_metadata[new_tile_location.y][new_tile_location.x]
+							lowest_shadow_value = room_metadata[new_tile_location.y][new_tile_location.x].duplicate(true)
 							lowest_shadow_value["location"] = Vector2i(new_tile_location.x, new_tile_location.y)
 				
 				# If a lowest shadow value was found...
@@ -123,7 +145,7 @@ func update_shadows():
 								and (lowest_shadow_value == null or room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] <= lowest_shadow_value["brightness"])
 						):
 							# Sets the current lowest brightness to the new lowest brightness
-							lowest_shadow_value = room_metadata[new_tile_location.y][new_tile_location.x]
+							lowest_shadow_value = room_metadata[new_tile_location.y][new_tile_location.x].duplicate(true)
 							lowest_shadow_value["location"] = Vector2i(new_tile_location.x, new_tile_location.y)
 				
 				# If a lowest shadow value was found...
@@ -134,39 +156,51 @@ func update_shadows():
 	draw_shadows()
 
 
+# Resets the shadows for the room back to the default room lighting
 func reset_shadows():
 	# Resets the shadows for the floors
 	for room_y in range(len(room_metadata)):
 		for room_x in range(len(room_metadata[room_y])):
 			room_metadata[room_y][room_x]["brightness"] = main_script.room_lighting
 
-
+# Sets the emissions for light sources
 func set_emissions():
-	var new_tile_location
-	
 	# Sets the emissions for light sources
 	for room_y in range(len(room_metadata)):
 		for room_x in range(len(room_metadata[room_y])):
 			# Only affects window tiles
 			if room_metadata[room_y][room_x]["type"] == "window":
-				# Determines the global tile location of the tile in the room
-				
-				# Loops over the surrounding tiles
-				for floor_check in SHADOW_CHECKS:
-					# Determines the local position of the checked tile
-					new_tile_location = Vector2i(room_x + floor_check.x, room_y + floor_check.y)
-					# Checks if the tile is within the room and is of type floor
-					if (
-							new_tile_location.y >= 0 
-							and new_tile_location.y < len(room_metadata)
-							and new_tile_location.x >= 0 
-							and new_tile_location.x < len(room_metadata[new_tile_location.y])
-							and room_metadata[new_tile_location.y][new_tile_location.x]["type"] == "floor"
-					):
-						# Sets the brightness of the tile to be equal to the emission value defined in the main script
-						room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] = main_script.window_emission
-						
+				update_emissions_for_tile("window", Vector2(room_x, room_y), main_script.window_emission)
+			elif room_metadata[room_y][room_x]["object_type"] == "lamp" and room_metadata[room_y][room_x]["object"].is_enabled:
+				update_emissions_for_tile("window", Vector2(room_x, room_y), main_script.lamp_emission)
 
+
+# Helper function to cap the brightness for certain tiles given the location and maximum value
+func cap_tile_brightness(tile_location: Vector2i, maximum_value: int) -> void:
+	room_metadata[tile_location.y][tile_location.x]["brightness"] = min(room_metadata[tile_location.y][tile_location.x]["brightness"], maximum_value)
+
+# Helper function to update the emissions given the type, location, and strength 
+func update_emissions_for_tile(tile_type: String, tile_location: Vector2, emission_strength: int) -> void:
+	var new_tile_location
+	# Determines the global tile location of the tile in the room
+	
+	# Loops over the surrounding tiles
+	for floor_check in SHADOW_CHECKS:
+		# Determines the local position of the checked tile
+		new_tile_location = Vector2i(tile_location.x + floor_check.x, tile_location.y + floor_check.y)
+		# Checks if the tile is within the room and is of type floor
+		if (
+				new_tile_location.y >= 0 
+				and new_tile_location.y < len(room_metadata)
+				and new_tile_location.x >= 0 
+				and new_tile_location.x < len(room_metadata[new_tile_location.y])
+				and room_metadata[new_tile_location.y][new_tile_location.x]["type"] == "floor"
+		):
+			# Sets the brightness of the tile to be equal to the emission value defined in the main script if the tile is darker than the emission value
+			room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] = min(emission_strength, room_metadata[new_tile_location.y][new_tile_location.x]["brightness"])
+
+
+# Updates the shadow tilemap to display the shadow values to the player
 func draw_shadows():
 	var tile_true_location
 	

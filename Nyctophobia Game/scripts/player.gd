@@ -62,7 +62,7 @@ func _input(event: InputEvent) -> void:
 		var expected_tile_pos = player_pos + expected_movement[0]
 		var expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 		
-		if expected_tile_metadata["type"] != "floor" or expected_tile_metadata["object"] != null:
+		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
 			return
 		
 		# Stores the next input to be played once the current ends
@@ -93,7 +93,15 @@ func _input(event: InputEvent) -> void:
 			if expected_tile_metadata["type"] in door_room_change.keys():
 				var expected_room = main_script.curr_room + door_room_change[expected_tile_metadata["type"]]
 				#print("There is a door here!")
-				main_script.move_to_room(expected_room, expected_tile_metadata["type"])
+				if main_script.move_to_room(expected_room, expected_tile_metadata["type"]):
+					break
+			
+			# Checks if the player can interact with the object
+			if expected_tile_metadata["object"] != null:
+				expected_tile_metadata["object"].interact()
+				
+				# Updates the room's shadows
+				main_script.shadow_tilemap.update_shadows()
 				break
 
 
@@ -105,7 +113,8 @@ func move_player() -> void:
 		
 		# Moves the player's visual smoothly along the planned path
 		tween_pos = create_tween().set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_SINE)
-		tween_pos.tween_property(self, "position", Vector2(player_pos[0] + (main_script.curr_room[0] * 12), player_pos[1] + (main_script.curr_room[1] * 10)) * 20, 0.4)
+		#tween_pos.tween_property(self, "position", Vector2(player_pos[0] + (main_script.curr_room[0] * 12), player_pos[1] + (main_script.curr_room[1] * 10)) * 20, 0.4)
+		tween_pos.tween_property(self, "position", Vector2(player_pos[0] + (main_script.curr_room[0] * 12), player_pos[1] + (main_script.curr_room[1] * 10)) * 20, 0.2)
 		
 		# Sets the animation according to the direction of the input
 		match next_movement[1]:
