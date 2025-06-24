@@ -1,7 +1,7 @@
 extends Node
 
 # Holds information for moving the camera around
-const ORIGINAL_CAMERA_POS = Vector2i(110, 90)
+const ORIGINAL_CAMERA_POS := Vector2i(110, 90)
 
 # Defines what each atlas coord is in terms of building type
 const BUILDING_TYPE_BY_ATLAS_COORDS = {
@@ -31,7 +31,7 @@ const FURNITURE_TYPE_BY_ATLAS_COORDS = {
 		Vector2i(2, 15): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
 		Vector2i(2, 17): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
 		Vector2i(4, 15): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)],
-		},
+	},
 	"small_television": {Vector2i(6, 15): []},
 	
 	"countertop": {Vector2i(3, 12): []},
@@ -42,26 +42,43 @@ const FURNITURE_TYPE_BY_ATLAS_COORDS = {
 }
 
 # Defines which objects can be walked through/over
-const WALKABLE_OBJECTS = ["book_shelf"]
+const WALKABLE_OBJECTS := ["book_shelf"]
+
+# Holds information about the size of the house in "rooms x rooms"
+const HOUSE_SIZE: int = 2
+
+# Holds information about the size of each room on the tilemap
+const ROOM_SIZE_X: int = 11
+const ROOM_SIZE_Y: int = 9
+
+# All tasks and their information
+const TASK_LIBRARY := {
+	"Make Bed": {}, # probability(?), location, abnormality
+	"Water Plants": {},
+	"Make Food": {},
+	"Wash Dishes": {},
+	"Organize Bookshelf": {},
+}
+
+# Master grid for information about the house
+var house_grid: Array = []
+var curr_room := Vector2i(0, 0)
+
+# Holds information regarding the default room lighting
+var room_lighting: int = 6 # 6
+var window_emission: int = 1 # 1
+var lamp_emission: int = 2 # 2
 
 # Defines which objects are highlighted in the dark
 var highlighted_objects = ["lamp"]
 
-# Holds information about the size of the house in "rooms x rooms"
-const HOUSE_SIZE = 2
+# The current day
+var day: int = 0
 
-# Holds information about the size of each room on the tilemap
-const ROOM_SIZE_X = 11
-const ROOM_SIZE_Y = 9
-
-# Master grid for information about the house
-var house_grid = []
-var curr_room = Vector2i(0, 0)
-
-# Holds information regarding the default room lighting
-var room_lighting = 6 # 6
-var window_emission = 1 # 1
-var lamp_emission = 2 # 2
+# Holds information regarding tasks
+var task_list: Array
+var task_quantity: int = 4
+var task_list_open := false
 
 @onready var room_tilemap: TileMapLayer = $"TileSets/RoomTileMap"
 @onready var objects_tilemap: TileMapLayer = $TileSets/ObjectsTileMap
@@ -70,7 +87,11 @@ var lamp_emission = 2 # 2
 @onready var player: Node2D = $"Player"
 @onready var camera: Camera2D = $"Camera"
 
-@onready var object_classes: Node = $"Object Classes"
+@onready var object_classes: Node = $"ObjectClasses"
+
+@onready var panel: Panel = $TaskDisplay/Panel
+@onready var task_list_display: Label = $TaskDisplay/Panel/TaskList
+@onready var auto_toggle: Timer = $TaskDisplay/AutoToggle
 
 
 # Called when the node enters the scene tree for the first time.
@@ -146,12 +167,52 @@ func _ready() -> void:
 	
 	shadow_tilemap.update_shadows()
 	
-	var room_metadata = house_grid[curr_room[1]][curr_room[0]]
-	
+	new_day()
 	
 	# Test
-	var new_lamp_object = object_classes.lamp_object.new()
-	print(new_lamp_object.type)
+	#var new_lamp_object = object_classes.lamp_object.new()
+	#print(new_lamp_object.type)
+
+
+# Updates day-sensitive events (tasks, shadow progression, etc.)
+func new_day() -> void:
+	day += 1
+	
+	## Randomizes Tasks
+	# Resets the display and task_list
+	task_list_display.text = ""
+	task_list.clear()
+	
+	# Adds tasks, filters out tasks already in list
+	for i in task_quantity:
+		task_list.append(TASK_LIBRARY.keys().filter(func(is_repeat): return is_repeat not in task_list).pick_random())
+	
+	# Sets task display
+	for task in task_list:
+		task_list_display.text += "- " + task + "\n"
+	
+	# Automattically opens the task list and detoggles it after 5 seconds
+	if not task_list_open: 
+		toggle_task_list()
+	auto_toggle.start()
+
+
+# Handles input unrelated to the player.
+func _input(_event: InputEvent) -> void:
+	# Toggle task list [TAB, C]
+	if Input.is_action_pressed(&"toggle_task_list"):
+		toggle_task_list()
+
+
+# Toggles the task list
+func toggle_task_list() -> void:
+	var tween_panel: Tween = create_tween().set_ease(Tween.EASE_IN if task_list_open else Tween.EASE_OUT).set_trans(Tween.TRANS_CIRC)
+	tween_panel.tween_property(panel, "position:x", -100 if task_list_open else 0, 0.4)
+	task_list_open = not task_list_open
+	
+	# Stops the auto detoggle timer if the task list is manually detoggled then retoggled before the timer timeout
+	if auto_toggle:
+		auto_toggle.stop()
 
 
 # Change room functions
@@ -227,3 +288,9 @@ func get_door_location_in_room(room_pos: Vector2i, door_direction: String) -> Ve
 	
 	# Returns -1 -1 as an error
 	return Vector2i(-1, -1)
+
+
+# Automatically detoggles the task list's initial auto-opening at the start of the day
+func _on_auto_toggle_timeout() -> void:
+	if task_list_open:
+		toggle_task_list()

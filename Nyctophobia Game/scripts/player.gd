@@ -59,8 +59,8 @@ func _input(event: InputEvent) -> void:
 		]
 		
 		# Checks to ensure that the expected tile is clear
-		var expected_tile_pos = player_pos + expected_movement[0]
-		var expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
+		var expected_tile_pos: Vector2i = player_pos + expected_movement[0]
+		var expected_tile_metadata: Dictionary = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 		
 		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
 			return
@@ -74,8 +74,8 @@ func _input(event: InputEvent) -> void:
 	
 	# Handles events for when an interact key is pressed
 	elif Input.is_action_pressed(&"interact"):
-		var expected_tile_pos
-		var expected_tile_metadata
+		var expected_tile_pos: Vector2i
+		var expected_tile_metadata: Dictionary
 		
 		# Checks the surrounding tiles for interactable objects
 		for check_tile_pos in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:

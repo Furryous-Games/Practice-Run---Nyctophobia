@@ -1,0 +1,10 @@
+[gd_resource type="LabelSettings" load_steps=2 format=3 uid="uid://dov7nku1llp15"]
+
+[ext_resource type="FontFile" uid="uid://der5snx03t7ue" path="res://assets/label_settings/Gbboot-ALpM.ttf" id="1_nykd1"]
+
+[resource]
+line_spacing = 12.0
+font = ExtResource("1_nykd1")
+font_size = 55
+outline_size = 5
+outline_color = Color(0, 0, 0, 1)
