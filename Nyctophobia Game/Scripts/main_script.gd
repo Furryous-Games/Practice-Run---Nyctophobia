@@ -210,7 +210,7 @@ func toggle_task_list() -> void:
 	tween_panel.tween_property(panel, "position:x", -100 if task_list_open else 0, 0.4)
 	task_list_open = not task_list_open
 	
-	# Stops the auto detoggle timer if the task list is manually detoggled then retoggled before the timer timeout
+	# Stops the auto detoggle timer if the task list is manually detoggled then retoggled before the timer timeout at the beginning of the day
 	if auto_toggle:
 		auto_toggle.stop()
 
