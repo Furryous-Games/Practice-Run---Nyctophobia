@@ -77,32 +77,41 @@ func _input(event: InputEvent) -> void:
 		var expected_tile_pos
 		var expected_tile_metadata
 		
-		# Checks the surrounding tiles for interactable objects
+		var player_interacted = false
+		
+		var door_room_change = {
+			"door_n": Vector2i(0, -1),
+			"door_e": Vector2i(1, 0),
+			"door_s": Vector2i(0, 1),
+			"door_w": Vector2i(-1, 0),
+		}
+		
+		# Checks the surrounding tiles for doors
 		for check_tile_pos in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
 			expected_tile_pos = player_pos + check_tile_pos
 			expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
-			
-			var door_room_change = {
-				"door_n": Vector2i(0, -1),
-				"door_e": Vector2i(1, 0),
-				"door_s": Vector2i(0, 1),
-				"door_w": Vector2i(-1, 0),
-			}
 			
 			# Checks if the object is a door
 			if expected_tile_metadata["type"] in door_room_change.keys():
 				var expected_room = main_script.curr_room + door_room_change[expected_tile_metadata["type"]]
 				#print("There is a door here!")
 				if main_script.move_to_room(expected_room, expected_tile_metadata["type"]):
+					player_interacted = true
 					break
-			
-			# Checks if the player can interact with the object
-			if expected_tile_metadata["object"] != null:
-				expected_tile_metadata["object"].interact()
+		
+		if not player_interacted:
+			# Checks the surrounding tiles for interactable objects
+			for check_tile_pos in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+				expected_tile_pos = player_pos + check_tile_pos
+				expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 				
-				# Updates the room's shadows
-				main_script.shadow_tilemap.update_shadows()
-				break
+				# Checks if the player can interact with the object
+				if expected_tile_metadata["object"] != null:
+					expected_tile_metadata["object"].interact()
+					
+					# Updates the room's shadows
+					main_script.shadow_tilemap.update_shadows()
+					break
 
 
 func move_player() -> void:

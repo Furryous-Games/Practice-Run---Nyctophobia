@@ -48,7 +48,7 @@ const WALKABLE_OBJECTS = ["book_shelf"]
 var highlighted_objects = ["lamp"]
 
 # Holds information about the size of the house in "rooms x rooms"
-const HOUSE_SIZE = 2
+const HOUSE_SIZE = Vector2i(4, 3)
 
 # Holds information about the size of each room on the tilemap
 const ROOM_SIZE_X = 11
@@ -60,7 +60,7 @@ var curr_room = Vector2i(0, 0)
 
 # Holds information regarding the default room lighting
 var room_lighting = 6 # 6
-var window_emission = 1 # 1
+var window_emission = 3 # 1
 var lamp_emission = 2 # 2
 
 @onready var room_tilemap: TileMapLayer = $"TileSets/RoomTileMap"
@@ -76,14 +76,14 @@ var lamp_emission = 2 # 2
 # Called when the node enters the scene tree for the first time.
 func _ready() -> void:
 	# Sets up the house grid to be a square 2D list
-	for y in range(HOUSE_SIZE):
+	for y in range(HOUSE_SIZE.y):
 		house_grid.append([])
-		for x in range(HOUSE_SIZE):
+		for x in range(HOUSE_SIZE.x):
 			house_grid[-1].append([])
 	
 	# Iterates through each room in the house
-	for room_y in range(HOUSE_SIZE):
-		for room_x in range(HOUSE_SIZE):
+	for room_y in range(HOUSE_SIZE.y):
+		for room_x in range(HOUSE_SIZE.x):
 			# Creates 2D lists for each tile in the room
 			for y in range(ROOM_SIZE_Y):
 				house_grid[room_y][room_x].append([])
@@ -101,8 +101,8 @@ func _ready() -> void:
 	var atlas_coords
 	
 	# Loops through all the rooms inside of the house
-	for house_y in range(HOUSE_SIZE):
-		for house_x in range(HOUSE_SIZE):
+	for house_y in range(HOUSE_SIZE.y):
+		for house_x in range(HOUSE_SIZE.x):
 			# Loops through all the tiles in the room
 			for room_y in range(ROOM_SIZE_Y):
 				for room_x in range(ROOM_SIZE_X):
@@ -161,8 +161,8 @@ func move_to_room(new_room: Vector2i, door_entered: String) -> bool:
 			# Checks that the expected room is within bounds
 			new_room.x >= 0 
 			and new_room.y >= 0 
-			and new_room.x < HOUSE_SIZE 
-			and new_room.y < HOUSE_SIZE
+			and new_room.x < HOUSE_SIZE.x
+			and new_room.y < HOUSE_SIZE.y
 	):
 		
 		# Defines what door for the program to search for when determining where to place the player in the new room
