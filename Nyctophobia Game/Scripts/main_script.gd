@@ -285,13 +285,6 @@ func move_to_room(new_room: Vector2i, door_entered: String) -> bool:
 		
 		# Move the player's visual to the new location
 		player.position = (spawn_tile + Vector2i(new_room[0] * 12, new_room[1] * 10)) * 20
-		# BUG: performing (move_x + move_y + interact) actions as soon as the next input is accepted (WalkCooldown = 0.175s) \
-				# the player position is incorrectly changed when moving into another room:
-					# NW room, E door: (180.0, 40.0), bugged: (280.0, 60.0)
-					# NE room, W door: (260.0, 60.0), bugged: (160.0, 40.0)
-				
-				# player.tween_pos is not running
-				# the calculation for player.position is correct (NE-W bugged: (260.0, 60.0))
 		
 		# Update the camera's position to the new room
 		camera.position = ORIGINAL_CAMERA_POS + Vector2i(new_room[0] * 12 * 20, new_room[1] * 10 * 20)
