@@ -63,12 +63,11 @@ func _input(event: InputEvent) -> void:
 		
 		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
 			# Sets the animation according to the action
-			player_sprite.animation = (
-				"walk_up" if Input.is_action_pressed(&"move_up")
-				else "walk_right" if Input.is_action_pressed(&"move_right")
-				else "walk_down" if Input.is_action_pressed(&"move_down")
-				else "walk_left"
-			)
+			match dir:
+				&"move_up": player_sprite.animation = "walk_up"
+				&"move_right": player_sprite.animation = "walk_right"
+				&"move_down": player_sprite.animation = "walk_down"
+				&"move_left": player_sprite.animation = "walk_left"
 			player_sprite.frame = 0
 			return
 		
