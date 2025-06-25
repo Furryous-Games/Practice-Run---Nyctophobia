@@ -12,7 +12,7 @@ const BUILDING_TYPE_BY_ATLAS_COORDS = {
 	"door_n": [Vector2i(3, 1)], 
 	"door_w": [Vector2i(0, 4)], 
 	"door_e": [Vector2i(4, 4)], 
-	"door_s": [Vector2i(3, 5)]
+	"door_s": [Vector2i(3, 5)],
 }
 
 const FURNITURE_TYPE_BY_ATLAS_COORDS = {
@@ -38,7 +38,7 @@ const FURNITURE_TYPE_BY_ATLAS_COORDS = {
 	"sink": {Vector2i(4, 12): []},
 	"oven": {Vector2i(5, 12): []},
 	"fridge": {Vector2i(0, 12): []},
-	"dining_table": {Vector2i(1, 12): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]}
+	"dining_table": {Vector2i(1, 12): [Vector2i(1, 0), Vector2i(0, 1), Vector2i(1, 1)]},
 }
 
 # Defines which objects can be walked through/over
@@ -53,11 +53,11 @@ const ROOM_SIZE_Y: int = 9
 
 # All tasks and their information
 const TASK_LIBRARY := {
-	"Make Bed": {}, # probability(?), location, abnormality
-	"Water Plants": {},
-	"Make Food": {},
-	"Wash Dishes": {},
-	"Organize Bookshelf": {},
+	"Make Bed": {"Weight": 1, "Abnormality": 0},
+	"Water Plants": {"Weight": 1, "Abnormality": 0},
+	"Make Food": {"Weight": 1, "Abnormality": 0},
+	"Wash Dishes": {"Weight": 1, "Abnormality": 0},
+	"Organize Bookshelf": {"Weight": 1, "Abnormality": 0},
 }
 
 # Master grid for information about the house
@@ -74,11 +74,14 @@ var highlighted_objects = ["lamp"]
 
 # The current day
 var day: int = 0
+# What tasks are added to the selection pool according to their abnormality
+var abnormality_level: int = 0
 
 # Holds information regarding tasks
 var task_list: Array
 var task_quantity: int = 4
 var task_list_open := false
+var completed_tasks: Array
 
 @onready var room_tilemap: TileMapLayer = $"TileSets/RoomTileMap"
 @onready var objects_tilemap: TileMapLayer = $TileSets/ObjectsTileMap
@@ -89,9 +92,10 @@ var task_list_open := false
 
 @onready var object_classes: Node = $"ObjectClasses"
 
-@onready var panel: Panel = $TaskDisplay/Panel
-@onready var task_list_display: Label = $TaskDisplay/Panel/TaskList
-@onready var auto_toggle: Timer = $TaskDisplay/AutoToggle
+@onready var task_panel: Panel = $UI/TaskPanel
+@onready var ui_heading: Label = $UI/TaskPanel/Heading
+@onready var ui_list: VBoxContainer = $UI/TaskPanel/List
+@onready var auto_toggle: Timer = $UI/AutoToggle
 
 
 # Called when the node enters the scene tree for the first time.
@@ -177,37 +181,63 @@ func _ready() -> void:
 # Updates day-sensitive events (tasks, shadow progression, etc.)
 func new_day() -> void:
 	day += 1
+	ui_heading.text = "Day " + str(day) + ", TASKS:"
 	
 	## Randomizes Tasks
-	# Resets the display and task_list
-	task_list_display.text = ""
+	completed_tasks.clear()
 	task_list.clear()
+	
+	# Adds an additional copy of a task to the selection list according to their Weight values, increasing their odds of selection
+	# Filters out tasks whose Abnormality is higher than the abnormality_level
+	var weighted_task_list: Array
+	for task_key in TASK_LIBRARY.keys().filter(func(is_abnormal): return TASK_LIBRARY[is_abnormal]["Abnormality"] <= abnormality_level):
+		for i in TASK_LIBRARY[task_key]["Weight"]:
+			weighted_task_list.append(task_key)
 	
 	# Adds tasks, filters out tasks already in list
 	for i in task_quantity:
-		task_list.append(TASK_LIBRARY.keys().filter(func(is_repeat): return is_repeat not in task_list).pick_random())
+		task_list.append(weighted_task_list.filter(func(is_repeat): return is_repeat not in task_list).pick_random())
+
+	# Creates Label nodes for each task as children of ListUI
+	if ui_list.get_child_count() < task_quantity:
+		for i in task_quantity - ui_list.get_child_count():
+			var task_node := Label.new()
+			task_node.name = task_list[i]
+			task_node.label_settings = preload("res://assets/label_settings/task_lebel.tres")
+			ui_list.add_child(task_node)
 	
-	# Sets task display
-	for task in task_list:
-		task_list_display.text += "- " + task + "\n"
-	
+	# Assigns task name to each task node
+	for task in task_list.size():
+		ui_list.get_child(task).text = "- " + task_list[task]
+
 	# Automattically opens the task list and detoggles it after 5 seconds
 	if not task_list_open: 
 		toggle_task_list()
-	auto_toggle.start()
+	auto_toggle.start()		
 
 
-# Handles input unrelated to the player.
-func _input(_event: InputEvent) -> void:
+# Handles input unrelated to the player character.
+func _input(event: InputEvent) -> void:
 	# Toggle task list [TAB, C]
 	if Input.is_action_pressed(&"toggle_task_list"):
 		toggle_task_list()
+	
+	# TEST
+	# Clears task at index 0 [Backspace, X]
+	if Input.is_action_pressed(&"Interact2"):
+		if ui_list.get_child_count() > 0:
+			task_list.remove_at(0)
+			ui_list.get_child(0).free()
+	
+	# TEST
+	if event.as_text() == "Space" and event.is_pressed():
+		new_day()
 
 
 # Toggles the task list
 func toggle_task_list() -> void:
 	var tween_panel: Tween = create_tween().set_ease(Tween.EASE_IN if task_list_open else Tween.EASE_OUT).set_trans(Tween.TRANS_CIRC)
-	tween_panel.tween_property(panel, "position:x", -100 if task_list_open else 0, 0.4)
+	tween_panel.tween_property(task_panel, "position:x", -100 if task_list_open else 0, 0.4)
 	task_list_open = not task_list_open
 	
 	# Stops the auto detoggle timer if the task list is manually detoggled then retoggled before the timer timeout at the beginning of the day

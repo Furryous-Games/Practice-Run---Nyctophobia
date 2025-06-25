@@ -105,8 +105,8 @@ position = Vector2(10, 10)
 sprite_frames = SubResource("SpriteFrames_3v2ag")
 animation = &"walk_up"
 
-[node name="WalkCooldown" type="Timer" parent="."]
+[node name="InputCooldown" type="Timer" parent="."]
 wait_time = 0.1
 one_shot = true
 
-[connection signal="timeout" from="WalkCooldown" to="." method="_on_walk_cooldown_timeout"]
+[connection signal="timeout" from="InputCooldown" to="." method="_on_input_cooldown_timeout"]

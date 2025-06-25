@@ -185,33 +185,30 @@ position = Vector2(-32, 0)
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(110, 90)
 
-[node name="TaskDisplay" type="CanvasLayer" parent="."]
+[node name="UI" type="CanvasLayer" parent="."]
 
-[node name="Panel" type="Panel" parent="TaskDisplay"]
+[node name="TaskPanel" type="Panel" parent="UI"]
 offset_left = -100.0
 offset_right = 427.0
 offset_bottom = 513.0
 scale = Vector2(0.15, 0.15)
 
-[node name="Heading" type="Label" parent="TaskDisplay/Panel"]
-layout_mode = 0
-offset_left = 6.66667
-offset_right = 151.667
+[node name="Heading" type="Label" parent="UI/TaskPanel"]
+layout_mode = 2
+offset_left = 7.0
+offset_right = 527.0
 offset_bottom = 56.0
-text = "Tasks"
 label_settings = ExtResource("7_o6xl0")
 
-[node name="TaskList" type="Label" parent="TaskDisplay/Panel"]
-layout_mode = 0
-offset_left = 13.0
-offset_top = 60.0
+[node name="List" type="VBoxContainer" parent="UI/TaskPanel"]
+layout_mode = 2
+offset_left = 7.0
+offset_top = 53.0
 offset_right = 527.0
 offset_bottom = 513.0
-label_settings = ExtResource("7_o6xl0")
-autowrap_mode = 2
 
-[node name="AutoToggle" type="Timer" parent="TaskDisplay"]
+[node name="AutoToggle" type="Timer" parent="UI"]
 wait_time = 5.0
 one_shot = true
 
-[connection signal="timeout" from="TaskDisplay/AutoToggle" to="." method="_on_auto_toggle_timeout"]
+[connection signal="timeout" from="UI/AutoToggle" to="." method="_on_auto_toggle_timeout"]
