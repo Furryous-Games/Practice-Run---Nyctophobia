@@ -17,7 +17,7 @@ var next_movement = null
 
 @onready var main_script: Node = $"../"
 @onready var player_sprite: AnimatedSprite2D = $"PlayerSprite"
-@onready var walk_cooldown: Timer = $"WalkCooldown"
+@onready var input_cooldown: Timer = $"InputCooldown"
 
 
 func _ready() -> void:
@@ -37,7 +37,6 @@ func _input(event: InputEvent) -> void:
 			or Input.is_action_pressed(&"move_down")
 			or Input.is_action_pressed(&"move_left")
 	):
-		
 		# Return if an input is cued or being executed
 		if next_movement != null:
 			return
@@ -59,10 +58,18 @@ func _input(event: InputEvent) -> void:
 		]
 		
 		# Checks to ensure that the expected tile is clear
-		var expected_tile_pos = player_pos + expected_movement[0]
-		var expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
+		var expected_tile_pos: Vector2i = player_pos + expected_movement[0]
+		var expected_tile_metadata: Dictionary = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 		
 		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
+			# Sets the animation according to the action
+			player_sprite.animation = (
+				"walk_up" if Input.is_action_pressed(&"move_up")
+				else "walk_right" if Input.is_action_pressed(&"move_right")
+				else "walk_down" if Input.is_action_pressed(&"move_down")
+				else "walk_left"
+			)
+			player_sprite.frame = 0
 			return
 		
 		# Stores the next input to be played once the current ends
@@ -135,14 +142,14 @@ func move_player() -> void:
 		
 		# Clears the player's next movement
 		next_movement = null
-		walk_cooldown.start()
+		input_cooldown.start()
 		
 		# Updates the room's shadows
 		main_script.shadow_tilemap.update_shadows()
 
 
 # Timer before inputs are accepted
-func _on_walk_cooldown_timeout() -> void:
+func _on_input_cooldown_timeout() -> void:
 	player_sprite.frame = 0
 	executing = false
 	move_player()

@@ -24,8 +24,8 @@ func get_object_from_furniture_type(type) -> Object:
 	} [type]
 
 class lamp_object:
-	var type = "lamp"
-	var is_enabled = false
+	var type := "lamp"
+	var is_enabled := false
 	
 	func interact() -> void:
 		is_enabled = not is_enabled

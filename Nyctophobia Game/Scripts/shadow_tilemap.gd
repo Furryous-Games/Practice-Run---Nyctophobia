@@ -2,7 +2,7 @@ extends TileMapLayer
 
 const SHADOW_CHECKS = [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, 0)]
 
-var room_metadata
+var room_metadata: Array
 
 @onready var main_script: Node = $"../../"
 
@@ -15,8 +15,8 @@ func update_shadows():
 	
 	# Initializes variables for the update
 	var lowest_shadow_value
-	var new_tile_location
-	var previous_room
+	var new_tile_location: Vector2i
+	var previous_room: Array
 	
 	# Sets the emissions for sources
 	set_emissions()
@@ -170,9 +170,9 @@ func set_emissions():
 		for room_x in range(len(room_metadata[room_y])):
 			# Only affects window tiles
 			if room_metadata[room_y][room_x]["type"] == "window":
-				update_emissions_for_tile("window", Vector2(room_x, room_y), main_script.window_emission)
+				update_emissions_for_tile(Vector2(room_x, room_y), main_script.window_emission)
 			elif room_metadata[room_y][room_x]["object_type"] == "lamp" and room_metadata[room_y][room_x]["object"].is_enabled:
-				update_emissions_for_tile("window", Vector2(room_x, room_y), main_script.lamp_emission)
+				update_emissions_for_tile(Vector2(room_x, room_y), main_script.lamp_emission)
 
 
 # Helper function to cap the brightness for certain tiles given the location and maximum value
@@ -180,8 +180,9 @@ func cap_tile_brightness(tile_location: Vector2i, maximum_value: int) -> void:
 	room_metadata[tile_location.y][tile_location.x]["brightness"] = min(room_metadata[tile_location.y][tile_location.x]["brightness"], maximum_value)
 
 # Helper function to update the emissions given the type, location, and strength 
-func update_emissions_for_tile(tile_type: String, tile_location: Vector2, emission_strength: int) -> void:
-	var new_tile_location
+# Removed tile_type as it was unused
+func update_emissions_for_tile(tile_location: Vector2, emission_strength: int) -> void:
+	var new_tile_location: Vector2i
 	# Determines the global tile location of the tile in the room
 	
 	# Loops over the surrounding tiles
@@ -202,7 +203,7 @@ func update_emissions_for_tile(tile_type: String, tile_location: Vector2, emissi
 
 # Updates the shadow tilemap to display the shadow values to the player
 func draw_shadows():
-	var tile_true_location
+	var tile_true_location: Vector2i
 	
 	# Change the shadows for the floors
 	for room_y in range(len(room_metadata)):
