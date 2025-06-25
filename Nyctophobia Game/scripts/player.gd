@@ -17,7 +17,7 @@ var next_movement = null
 
 @onready var main_script: Node = $"../"
 @onready var player_sprite: AnimatedSprite2D = $"PlayerSprite"
-@onready var walk_cooldown: Timer = $"WalkCooldown"
+@onready var input_cooldown: Timer = $"InputCooldown"
 
 
 func _ready() -> void:
@@ -37,7 +37,6 @@ func _input(event: InputEvent) -> void:
 			or Input.is_action_pressed(&"move_down")
 			or Input.is_action_pressed(&"move_left")
 	):
-		
 		# Return if an input is cued or being executed
 		if next_movement != null:
 			return
@@ -59,10 +58,18 @@ func _input(event: InputEvent) -> void:
 		]
 		
 		# Checks to ensure that the expected tile is clear
-		var expected_tile_pos = player_pos + expected_movement[0]
-		var expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
+		var expected_tile_pos: Vector2i = player_pos + expected_movement[0]
+		var expected_tile_metadata: Dictionary = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 		
 		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
+			# Sets the animation according to the action
+			player_sprite.animation = (
+				"walk_up" if Input.is_action_pressed(&"move_up")
+				else "walk_right" if Input.is_action_pressed(&"move_right")
+				else "walk_down" if Input.is_action_pressed(&"move_down")
+				else "walk_left"
+			)
+			player_sprite.frame = 0
 			return
 		
 		# Stores the next input to be played once the current ends
@@ -77,32 +84,41 @@ func _input(event: InputEvent) -> void:
 		var expected_tile_pos
 		var expected_tile_metadata
 		
-		# Checks the surrounding tiles for interactable objects
+		var player_interacted = false
+		
+		var door_room_change = {
+			"door_n": Vector2i(0, -1),
+			"door_e": Vector2i(1, 0),
+			"door_s": Vector2i(0, 1),
+			"door_w": Vector2i(-1, 0),
+		}
+		
+		# Checks the surrounding tiles for doors
 		for check_tile_pos in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
 			expected_tile_pos = player_pos + check_tile_pos
 			expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
-			
-			var door_room_change = {
-				"door_n": Vector2i(0, -1),
-				"door_e": Vector2i(1, 0),
-				"door_s": Vector2i(0, 1),
-				"door_w": Vector2i(-1, 0),
-			}
 			
 			# Checks if the object is a door
 			if expected_tile_metadata["type"] in door_room_change.keys():
 				var expected_room = main_script.curr_room + door_room_change[expected_tile_metadata["type"]]
 				#print("There is a door here!")
 				if main_script.move_to_room(expected_room, expected_tile_metadata["type"]):
+					player_interacted = true
 					break
-			
-			# Checks if the player can interact with the object
-			if expected_tile_metadata["object"] != null:
-				expected_tile_metadata["object"].interact()
+		
+		if not player_interacted:
+			# Checks the surrounding tiles for interactable objects
+			for check_tile_pos in [Vector2i(0, -1), Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0)]:
+				expected_tile_pos = player_pos + check_tile_pos
+				expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 				
-				# Updates the room's shadows
-				main_script.shadow_tilemap.update_shadows()
-				break
+				# Checks if the player can interact with the object
+				if expected_tile_metadata["object"] != null:
+					expected_tile_metadata["object"].interact()
+					
+					# Updates the room's shadows
+					main_script.shadow_tilemap.update_shadows()
+					break
 
 
 func move_player() -> void:
@@ -126,14 +142,14 @@ func move_player() -> void:
 		
 		# Clears the player's next movement
 		next_movement = null
-		walk_cooldown.start()
+		input_cooldown.start()
 		
 		# Updates the room's shadows
 		main_script.shadow_tilemap.update_shadows()
 
 
 # Timer before inputs are accepted
-func _on_walk_cooldown_timeout() -> void:
+func _on_input_cooldown_timeout() -> void:
 	player_sprite.frame = 0
 	executing = false
 	move_player()
