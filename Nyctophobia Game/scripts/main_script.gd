@@ -45,7 +45,6 @@ const FURNITURE_TYPE_BY_ATLAS_COORDS = {
 const WALKABLE_OBJECTS := ["book_shelf"]
 
 # Holds information about the size of the house in "rooms x rooms"
-
 const HOUSE_SIZE = Vector2i(4, 3)
 
 # Holds information about the size of each room on the tilemap
@@ -54,11 +53,21 @@ const ROOM_SIZE_Y: int = 9
 
 # All tasks and their information
 const TASK_LIBRARY := {
-	"Make Bed": {"Weight": 1, "Abnormality": 0},
+	#"Make Bed": {"Weight": 1, "Abnormality": 0, "type": "bed"},
 	"Water Plants": {"Weight": 1, "Abnormality": 0},
 	"Make Food": {"Weight": 1, "Abnormality": 0},
 	"Wash Dishes": {"Weight": 1, "Abnormality": 0},
 	"Organize Bookshelf": {"Weight": 1, "Abnormality": 0},
+}
+
+# Timer wait times
+const TIMER := {
+	"toggle_on": 1,
+	"toggle_off": 5,
+	"toggle_tween": 0.4,
+	"fade_in_tween": 1,
+	"fade_out": 1.5,
+	"fade_out_l": 2,
 }
 
 # Master grid for information about the house
@@ -67,6 +76,7 @@ var curr_room := Vector2i(0, 0)
 
 # Holds information regarding the default room lighting
 
+# 1-6, Bright -> Dark
 var room_lighting: int = 6 # 6
 var window_emission: int = 1 # 1
 var lamp_emission: int = 2 # 2
@@ -79,11 +89,21 @@ var day: int = 0
 # What tasks are added to the selection pool according to their abnormality
 var abnormality_level: int = 0
 
-# Holds information regarding tasks
-var task_list: Array
+
+# The number of tasks each day
 var task_quantity: int = 4
-var task_list_open := false
-var completed_tasks: Array
+# The daily tasks
+var task_list: Array[String]
+# Assosiates each task_node's id with their respective task
+var task_node_id: Dictionary
+# Stores the completed task for complete_task()
+var completed_task: String
+# Is the task list display is toggled on
+var is_task_list_toggled := false
+# Can the player toggle the task list display
+var toggle_lock := false
+# Animation sequences on day start
+var day_sequence: int = 0
 
 @onready var room_tilemap: TileMapLayer = $"TileSets/RoomTileMap"
 @onready var objects_tilemap: TileMapLayer = $TileSets/ObjectsTileMap
@@ -94,10 +114,15 @@ var completed_tasks: Array
 
 @onready var object_classes: Node = $"ObjectClasses"
 
-@onready var task_panel: Panel = $UI/TaskPanel
+@onready var sequence_timer: Timer = $SequenceTimer
+@onready var ui_screen_fade: ColorRect = $UI/ScreenFade
+@onready var ui_day: Label = $UI/ScreenFade/Day
+
+@onready var ui_task_panel: Panel = $UI/TaskPanel
 @onready var ui_heading: Label = $UI/TaskPanel/Heading
-@onready var ui_list: VBoxContainer = $UI/TaskPanel/List
+@onready var ui_task_list: VBoxContainer = $UI/TaskPanel/TaskListDisplay
 @onready var auto_toggle: Timer = $UI/AutoToggle
+@onready var update_task_list: Timer = $UI/UpdateTaskList
 
 
 # Called when the node enters the scene tree for the first time.
@@ -173,78 +198,135 @@ func _ready() -> void:
 	
 	shadow_tilemap.update_shadows()
 	
-	new_day()
-	
-	# Test
-	#var new_lamp_object = object_classes.lamp_object.new()
-	#print(new_lamp_object.type)
+	ui_screen_fade.visible = true
+	day_sequence = 1
+	new_day_sequence()
 
 
 # Updates day-sensitive events (tasks, shadow progression, etc.)
-func new_day() -> void:
-	day += 1
-	ui_heading.text = "Day " + str(day) + ", TASKS:"
-	
-	## Randomizes Tasks
-	completed_tasks.clear()
-	task_list.clear()
-	
-	# Adds an additional copy of a task to the selection list according to their Weight values, increasing their odds of selection
-	# Filters out tasks whose Abnormality is higher than the abnormality_level
-	var weighted_task_list: Array
-	for task_key in TASK_LIBRARY.keys().filter(func(is_abnormal): return TASK_LIBRARY[is_abnormal]["Abnormality"] <= abnormality_level):
-		for i in TASK_LIBRARY[task_key]["Weight"]:
-			weighted_task_list.append(task_key)
-	
-	# Adds tasks, filters out tasks already in list
-	for i in task_quantity:
-		task_list.append(weighted_task_list.filter(func(is_repeat): return is_repeat not in task_list).pick_random())
+# The animations, etc. to be played sequencially at day start
+func new_day_sequence() -> void:
+	match day_sequence:
+		0: # Screen fade out, lock manual toggling (Day 2+ only)
+			if is_task_list_toggled:
+				toggle_task_list()
+			toggle_lock = true
+			
+			var tween_fade: Tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+			tween_fade.tween_property(ui_screen_fade, "modulate:a", 2, 1.5)
+			sequence_timer.wait_time = TIMER["fade_out"]
+			sequence_timer.start()
+		
+		1: # Set day, lock manual toggling, fade text in
+			toggle_lock = true
+			day += 1
+			ui_day.text = "Day   " + str(day)
+			var tween_text_fade: Tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+			tween_text_fade.tween_property(ui_day, "self_modulate:a", 2, 1.5)
+			sequence_timer.wait_time = TIMER["fade_out"]
+			sequence_timer.start()
+		
+		2: # Fade text out
+			var tween_text_fade: Tween = create_tween().set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_SINE)
+			tween_text_fade.tween_property(ui_day, "self_modulate:a", 0, 2)
+			sequence_timer.wait_time = TIMER["fade_out_l"]
+			sequence_timer.start()
+		
+		3: # Set task list, screen fade in
+			ui_heading.text = "Day " + str(day) + ", TASKS:"
+			add_tasks(true)
+			
+			var tween_fade: Tween = create_tween().set_ease(Tween.EASE_IN_OUT).set_trans(Tween.TRANS_SINE)
+			tween_fade.tween_property(ui_screen_fade, "modulate:a", 0, 1.5)
+			sequence_timer.wait_time = TIMER["fade_in_tween"]
+			sequence_timer.start()
+			
+		4: # Start auto-toggle-on timer, enables player movement
+			player.can_move = true
+			sequence_timer.wait_time = TIMER["toggle_on"]
+			sequence_timer.start()
+			
+		5: # Auto-open task list, start auto-toggle-off timer
+			toggle_task_list()
+			sequence_timer.wait_time = TIMER["toggle_off"]
+			sequence_timer.start()
+		
+		6: # Auto-close task list and unlock manual toggling
+			toggle_task_list()
+			toggle_lock = false
+		
+		7: # End-of-day task list
+			toggle_task_list()
+			toggle_lock = false
 
-	# Creates Label nodes for each task as children of ListUI
-	if ui_list.get_child_count() < task_quantity:
-		for i in task_quantity - ui_list.get_child_count():
+
+func add_tasks(day_start: bool) -> void:	
+	task_list.clear()
+	task_node_id.clear()
+	
+	if day_start:
+		# Adds an additional copy of a task to the selection list according to their Weight values, increasing their odds of selection
+		# Filters out tasks whose Abnormality is higher than the abnormality_level
+		var weighted_task_list: Array
+		for task_key in TASK_LIBRARY.keys().filter(func(is_abnormal): return TASK_LIBRARY[is_abnormal]["Abnormality"] <= abnormality_level):
+			for i in TASK_LIBRARY[task_key]["Weight"]:
+				weighted_task_list.append(task_key)
+		
+		# Adds tasks, filters out tasks already in list
+		for i in task_quantity:
+			task_list.append(weighted_task_list.filter(func(is_repeat): return is_repeat not in task_list).pick_random())
+
+	else:
+		task_list.append_array(["Turn On TV", "Go To Bed"])
+	
+	# Creates Label nodes for each task as children of TaskListDisplay
+	if ui_task_list.get_child_count() < (task_quantity if day_start else task_list.size()):
+		for i in (task_quantity if day_start else task_list.size()) - ui_task_list.get_child_count():
 			var task_node := Label.new()
-			task_node.name = task_list[i]
 			task_node.label_settings = preload("res://assets/label_settings/task_lebel.tres")
-			ui_list.add_child(task_node)
+			ui_task_list.add_child(task_node)
+			task_node_id[task_list[i]] = task_node
 	
 	# Assigns task name to each task node
 	for task in task_list.size():
-		ui_list.get_child(task).text = "- " + task_list[task]
-
-	# Automattically opens the task list and detoggles it after 5 seconds
-	if not task_list_open: 
-		toggle_task_list()
-	auto_toggle.start()		
+		ui_task_list.get_child(task).text = "- " + task_list[task]
 
 
 # Handles input unrelated to the player character.
-func _input(event: InputEvent) -> void:
+func _input(_devent: InputEvent) -> void:
 	# Toggle task list [TAB, C]
-	if Input.is_action_pressed(&"toggle_task_list"):
-		toggle_task_list()
+	if Input.is_action_just_pressed(&"toggle_task_list"):
+		if not toggle_lock:
+			toggle_task_list()
+			# Stops the auto toggle timer if the task list is manually detoggled then retoggled before the timer timeout
+			if auto_toggle:
+				auto_toggle.stop()
 	
 	# TEST
-	# Clears task at index 0 [Backspace, X]
-	if Input.is_action_pressed(&"Interact2"):
-		if ui_list.get_child_count() > 0:
-			task_list.remove_at(0)
-			ui_list.get_child(0).free()
-	
-	# TEST
-	if event.as_text() == "Space" and event.is_pressed():
-		new_day()
+	# Advances the day [Backspace, X]
+	if Input.is_action_just_pressed(&"Interact2"):
+		day_sequence = 0
+		new_day_sequence()
 
+
+func complete_task(complete: String) -> void:
+	toggle_lock = true
+	completed_task = complete
+	
+	if is_task_list_toggled:
+		toggle_task_list()
+		update_task_list.wait_time = 0.6
+	else:
+		update_task_list.wait_time = 0.1
+	auto_toggle.start()
+	update_task_list.start()
+	
 
 # Toggles the task list
 func toggle_task_list() -> void:
-	var tween_panel: Tween = create_tween().set_ease(Tween.EASE_IN if task_list_open else Tween.EASE_OUT).set_trans(Tween.TRANS_CIRC)
-	tween_panel.tween_property(task_panel, "position:x", -100 if task_list_open else 0, 0.4)
-	task_list_open = not task_list_open
-	
-	# Stops the auto detoggle timer if the task list is manually detoggled then retoggled before the timer timeout at the beginning of the day
-	if auto_toggle:
-		auto_toggle.stop()
+	var tween_panel: Tween = create_tween().set_ease(Tween.EASE_IN if is_task_list_toggled else Tween.EASE_OUT).set_trans(Tween.TRANS_CIRC)
+	tween_panel.tween_property(ui_task_panel, "position:x", -100 if is_task_list_toggled else 0, 0.4)
+	is_task_list_toggled = not is_task_list_toggled
 
 
 # Change room functions
@@ -252,10 +334,8 @@ func move_to_room(new_room: Vector2i, door_entered: String) -> bool:
 	# Checks if the door is valid and unlocked
 	if (
 			# Checks that the expected room is within bounds
-			new_room.x >= 0 
-			and new_room.y >= 0 
-			and new_room.x < HOUSE_SIZE.x
-			and new_room.y < HOUSE_SIZE.y
+			new_room.x >= 0 and new_room.y >= 0 
+			and new_room.x < HOUSE_SIZE.x and new_room.y < HOUSE_SIZE.y
 	):
 		
 		# Defines what door for the program to search for when determining where to place the player in the new room
@@ -315,7 +395,29 @@ func get_door_location_in_room(room_pos: Vector2i, door_direction: String) -> Ve
 	return Vector2i(-1, -1)
 
 
-# Automatically detoggles the task list's initial auto-opening at the start of the day
+# Increments day_sequence and calls new_day_sequence
+func _on_sequence_timeout() -> void:
+	day_sequence += 1
+	new_day_sequence()
+
+
+# Updates the task list after task completion
+func _on_update_task_list_timeout() -> void:
+	task_list.erase(completed_task)
+	task_node_id[completed_task].free()
+	task_node_id.erase(completed_task)
+	
+	if task_list.is_empty():
+		add_tasks(false)
+		sequence_timer.wait_time = TIMER["toggle_on"]
+		sequence_timer.start()
+	
+	else:
+		toggle_task_list()
+		toggle_lock = false
+
+
+# Auto matically detoggles the auto toggle
 func _on_auto_toggle_timeout() -> void:
-	if task_list_open:
+	if is_task_list_toggled:
 		toggle_task_list()

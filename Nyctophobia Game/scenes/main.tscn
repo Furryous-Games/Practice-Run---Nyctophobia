@@ -1,6 +1,6 @@
-[gd_scene load_steps=14 format=4 uid="uid://b4qdfptrurygl"]
+[gd_scene load_steps=15 format=4 uid="uid://b4qdfptrurygl"]
 
-[ext_resource type="Script" uid="uid://g8pqkqh6xfnj" path="res://scripts/main_script.gd" id="1_tefeu"]
+[ext_resource type="Script" uid="uid://dcjv2nig5r2hn" path="res://scripts/main_script.gd" id="1_tefeu"]
 [ext_resource type="Script" uid="uid://h62lnacmef67" path="res://scripts/object_classes.gd" id="2_6bp64"]
 [ext_resource type="Texture2D" uid="uid://d2nvyfnik0rhk" path="res://assets/sprites/room_tileset.png" id="2_o6xl0"]
 [ext_resource type="Texture2D" uid="uid://eo78cblja8g0" path="res://assets/sprites/square_shader.png" id="4_85g3d"]
@@ -158,6 +158,13 @@ texture_region_size = Vector2i(20, 20)
 tile_size = Vector2i(20, 20)
 sources/0 = SubResource("TileSetAtlasSource_qgukd")
 
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o6xl0"]
+bg_color = Color(0.0846899, 0.0846899, 0.0846899, 0.862745)
+border_width_right = 6
+border_width_bottom = 6
+border_color = Color(0.359069, 0.359069, 0.359069, 0.901961)
+corner_detail = 1
+
 [node name="Main" type="Node2D"]
 script = ExtResource("1_tefeu")
 
@@ -180,35 +187,60 @@ tile_set = SubResource("TileSet_m61vi")
 script = ExtResource("5_choun")
 
 [node name="Player" parent="." instance=ExtResource("6_ya4ey")]
-position = Vector2(-32, 0)
 
 [node name="Camera" type="Camera2D" parent="."]
 position = Vector2(110, 90)
+
+[node name="SequenceTimer" type="Timer" parent="."]
+one_shot = true
 
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="TaskPanel" type="Panel" parent="UI"]
 offset_left = -100.0
-offset_right = 427.0
-offset_bottom = 513.0
-scale = Vector2(0.15, 0.15)
+offset_right = 429.0
+offset_bottom = 318.0
+scale = Vector2(0.17, 0.17)
+theme_override_styles/panel = SubResource("StyleBoxFlat_o6xl0")
 
 [node name="Heading" type="Label" parent="UI/TaskPanel"]
 layout_mode = 2
-offset_left = 7.0
-offset_right = 527.0
-offset_bottom = 56.0
+offset_left = 12.0
+offset_top = 6.0
+offset_right = 526.0
+offset_bottom = 62.0
 label_settings = ExtResource("7_o6xl0")
 
-[node name="List" type="VBoxContainer" parent="UI/TaskPanel"]
+[node name="TaskListDisplay" type="VBoxContainer" parent="UI/TaskPanel"]
 layout_mode = 2
-offset_left = 7.0
-offset_top = 53.0
-offset_right = 527.0
-offset_bottom = 513.0
+offset_left = 12.0
+offset_top = 71.0
+offset_right = 529.0
+offset_bottom = 294.0
 
 [node name="AutoToggle" type="Timer" parent="UI"]
-wait_time = 5.0
+wait_time = 4.0
 one_shot = true
 
+[node name="UpdateTaskList" type="Timer" parent="UI"]
+wait_time = 0.7
+one_shot = true
+
+[node name="ScreenFade" type="ColorRect" parent="UI"]
+offset_right = 250.0
+offset_bottom = 200.0
+color = Color(0, 0, 0, 1)
+
+[node name="Day" type="Label" parent="UI/ScreenFade"]
+self_modulate = Color(1, 1, 1, 0)
+layout_mode = 0
+offset_left = 97.0
+offset_top = 81.0
+offset_right = 194.0
+offset_bottom = 137.0
+scale = Vector2(0.3, 0.3)
+label_settings = ExtResource("7_o6xl0")
+
+[connection signal="timeout" from="SequenceTimer" to="." method="_on_sequence_timeout"]
 [connection signal="timeout" from="UI/AutoToggle" to="." method="_on_auto_toggle_timeout"]
+[connection signal="timeout" from="UI/UpdateTaskList" to="." method="_on_update_task_list_timeout"]

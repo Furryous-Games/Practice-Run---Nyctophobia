@@ -9,6 +9,9 @@ var player_pos: Vector2i
 # For tweening
 var tween_pos: Tween
 
+# Prevents the player from moving during the fade in
+var can_move := false
+
 # Whether or not a move command is currently being enacted
 var executing := false
 
@@ -27,7 +30,7 @@ func _ready() -> void:
 
 # Handles user inputs
 func _input(event: InputEvent) -> void:
-	if not event.is_pressed() or executing:
+	if not event.is_pressed() or executing or not can_move:
 		return
 		
 	# Handles directional inputs
@@ -61,7 +64,11 @@ func _input(event: InputEvent) -> void:
 		var expected_tile_pos: Vector2i = player_pos + expected_movement[0]
 		var expected_tile_metadata: Dictionary = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 		
-		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
+		if (
+				expected_tile_metadata["type"] != "floor" 
+				or (expected_tile_metadata["object_type"] != null 
+				and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS)
+		):
 			# Sets the animation according to the action
 			match dir:
 				&"move_up": player_sprite.animation = "walk_up"
@@ -111,12 +118,23 @@ func _input(event: InputEvent) -> void:
 				expected_tile_pos = player_pos + check_tile_pos
 				expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 				
+				
 				# Checks if the player can interact with the object
 				if expected_tile_metadata["object"] != null:
-					expected_tile_metadata["object"].interact()
+					var tile_object: Object = expected_tile_metadata["object"]
 					
-					# Updates the room's shadows
-					main_script.shadow_tilemap.update_shadows()
+					if tile_object.type in main_script.task_list:
+						tile_object.interact()
+						main_script.complete_task(tile_object.type)
+						
+					elif tile_object.type == "bed":
+						pass
+					
+					elif tile_object.type == "lamp":
+						tile_object.interact()
+						# Updates the room's shadows
+						main_script.shadow_tilemap.update_shadows()
+					
 					break
 
 

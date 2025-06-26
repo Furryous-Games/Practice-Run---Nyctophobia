@@ -48,7 +48,8 @@ func update_shadows():
 							# Checks if the checked tile is of type floor, and checks if the brightness is lower than the current lowest brightness
 							if (
 									previous_room[new_tile_location.y][new_tile_location.x]["type"] == "floor"
-									and (lowest_shadow_value == null or previous_room[new_tile_location.y][new_tile_location.x]["brightness"] < lowest_shadow_value["brightness"])
+									and (lowest_shadow_value == null 
+									or previous_room[new_tile_location.y][new_tile_location.x]["brightness"] < lowest_shadow_value["brightness"])
 							):
 								# Sets the current lowest brightness to the new lowest brightness
 								lowest_shadow_value = previous_room[new_tile_location.y][new_tile_location.x]
@@ -108,7 +109,8 @@ func update_shadows():
 						# Checks if the checked tile is of type floor, and checks if the brightness is lower than the current lowest brightness
 						if (
 								room_metadata[new_tile_location.y][new_tile_location.x]["type"] == "floor"
-								and (lowest_shadow_value == null or room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] <= lowest_shadow_value["brightness"])
+								and (lowest_shadow_value == null 
+								or room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] <= lowest_shadow_value["brightness"])
 						):
 							# Sets the current lowest brightness to the new lowest brightness
 							lowest_shadow_value = room_metadata[new_tile_location.y][new_tile_location.x].duplicate(true)
@@ -142,7 +144,8 @@ func update_shadows():
 						# Checks if the tile is a wall corner, and checks if the checked tile's brightness is lower than the current lowest brightness
 						if (
 								(room_metadata[room_y][room_x]["type"] == "wall_corner")
-								and (lowest_shadow_value == null or room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] <= lowest_shadow_value["brightness"])
+								and (lowest_shadow_value == null 
+								or room_metadata[new_tile_location.y][new_tile_location.x]["brightness"] <= lowest_shadow_value["brightness"])
 						):
 							# Sets the current lowest brightness to the new lowest brightness
 							lowest_shadow_value = room_metadata[new_tile_location.y][new_tile_location.x].duplicate(true)
