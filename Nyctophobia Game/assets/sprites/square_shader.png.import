@@ -3,15 +3,15 @@
 importer="texture"
 type="CompressedTexture2D"
 uid="uid://eo78cblja8g0"
-path="res://.godot/imported/square_shader.png-f7c153cbf8c8ef706b152190dcfa02ce.ctex"
+path="res://.godot/imported/square_shader.png-75cb725141bbb509dbb32cd7b119e2e5.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://assets/sprites/square_shader.png"
-dest_files=["res://.godot/imported/square_shader.png-f7c153cbf8c8ef706b152190dcfa02ce.ctex"]
+source_file="res://Assets/sprites/square_shader.png"
+dest_files=["res://.godot/imported/square_shader.png-75cb725141bbb509dbb32cd7b119e2e5.ctex"]
 
 [params]
 

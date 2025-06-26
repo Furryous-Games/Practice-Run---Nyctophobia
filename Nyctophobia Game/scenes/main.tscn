@@ -1,12 +1,12 @@
 [gd_scene load_steps=14 format=4 uid="uid://b4qdfptrurygl"]
 
-[ext_resource type="Script" uid="uid://g8pqkqh6xfnj" path="res://scripts/main_script.gd" id="1_tefeu"]
-[ext_resource type="Script" uid="uid://h62lnacmef67" path="res://scripts/object_classes.gd" id="2_6bp64"]
-[ext_resource type="Texture2D" uid="uid://d2nvyfnik0rhk" path="res://assets/sprites/room_tileset.png" id="2_o6xl0"]
-[ext_resource type="Texture2D" uid="uid://eo78cblja8g0" path="res://assets/sprites/square_shader.png" id="4_85g3d"]
-[ext_resource type="Script" uid="uid://h1ty80jyu3kw" path="res://scripts/shadow_tilemap.gd" id="5_choun"]
-[ext_resource type="PackedScene" uid="uid://bn6ku55hacl74" path="res://scenes/player.tscn" id="6_ya4ey"]
-[ext_resource type="LabelSettings" uid="uid://dov7nku1llp15" path="res://assets/label_settings/task_lebel.tres" id="7_o6xl0"]
+[ext_resource type="Script" uid="uid://b3biru5vxjpuw" path="res://scripts/main_script.gd" id="1_tefeu"]
+[ext_resource type="Script" uid="uid://h62lnacmef67" path="res://Scripts/object_classes.gd" id="2_6bp64"]
+[ext_resource type="Texture2D" uid="uid://d2nvyfnik0rhk" path="res://Assets/sprites/room_tileset.png" id="2_o6xl0"]
+[ext_resource type="Texture2D" uid="uid://eo78cblja8g0" path="res://Assets/sprites/square_shader.png" id="4_85g3d"]
+[ext_resource type="Script" uid="uid://h1ty80jyu3kw" path="res://Scripts/shadow_tilemap.gd" id="5_choun"]
+[ext_resource type="PackedScene" uid="uid://bn6ku55hacl74" path="res://Scenes/player.tscn" id="6_ya4ey"]
+[ext_resource type="LabelSettings" uid="uid://dov7nku1llp15" path="res://Assets/label_settings/task_lebel.tres" id="7_o6xl0"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iw1gg"]
 texture = ExtResource("2_o6xl0")

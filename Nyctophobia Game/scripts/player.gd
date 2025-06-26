@@ -15,10 +15,20 @@ var executing := false
 # Stores the next input given while the current movement is being executed
 var next_movement = null
 
+# Holds information related to stress
+var player_stress := Vector2i(0, 100)
+const stress_by_light_level = {
+	1: -5,
+	2: 0,
+	3: 5,
+	4: 10,
+	5: 20
+}
+
+# Node imports
 @onready var main_script: Node = $"../"
 @onready var player_sprite: AnimatedSprite2D = $"PlayerSprite"
 @onready var input_cooldown: Timer = $"InputCooldown"
-
 
 func _ready() -> void:
 	position = PLAYER_SPAWN * 20
@@ -152,3 +162,18 @@ func _on_input_cooldown_timeout() -> void:
 	player_sprite.frame = 0
 	executing = false
 	move_player()
+
+
+func _on_stress_update() -> void:
+	var curr_light_level = main_script.shadow_tilemap.get_shadow_level_at_coord(player_pos)
+	
+	player_stress[0] += stress_by_light_level[curr_light_level]
+	
+	if player_stress[0] < 0:
+		player_stress[0] = 0
+	if player_stress[0] > player_stress[1]:
+		player_stress[0] = player_stress[1]
+		print("GAME OVER")
+	
+	print(curr_light_level)
+	print(player_stress)

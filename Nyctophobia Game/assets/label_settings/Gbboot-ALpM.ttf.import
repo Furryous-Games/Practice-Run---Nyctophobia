@@ -3,12 +3,12 @@
 importer="font_data_dynamic"
 type="FontFile"
 uid="uid://der5snx03t7ue"
-path="res://.godot/imported/Gbboot-ALpM.ttf-528862bbe87eea0c6ccc2c1bd86cd3e5.fontdata"
+path="res://.godot/imported/Gbboot-ALpM.ttf-593efee0f4906610931bf8e42c50bf7a.fontdata"
 
 [deps]
 
-source_file="res://assets/label_settings/Gbboot-ALpM.ttf"
-dest_files=["res://.godot/imported/Gbboot-ALpM.ttf-528862bbe87eea0c6ccc2c1bd86cd3e5.fontdata"]
+source_file="res://Assets/label_settings/Gbboot-ALpM.ttf"
+dest_files=["res://.godot/imported/Gbboot-ALpM.ttf-593efee0f4906610931bf8e42c50bf7a.fontdata"]
 
 [params]
 

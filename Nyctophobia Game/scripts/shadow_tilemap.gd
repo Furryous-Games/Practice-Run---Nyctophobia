@@ -215,3 +215,8 @@ func draw_shadows():
 				
 				# Updates the tile on the tilemap to be equal to the brightness value of the tile
 				set_cell(tile_true_location, 0, Vector2i(0, 0), room_metadata[room_y][room_x]["brightness"])
+
+
+# Helper function to calculate the stress deficit
+func get_shadow_level_at_coord(tile_location: Vector2):
+	return room_metadata[tile_location.y][tile_location.x]["brightness"]
