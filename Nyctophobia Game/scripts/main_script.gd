@@ -120,8 +120,8 @@ func _ready() -> void:
 						"brightness": 6,
 						"object_type": null,
 						"object": null,
-						"interactable": null,
 						"type": null,
+						"atlas_coords": null,
 					})
 	
 	# Creates variables to hold the atlas coords and tile type
@@ -164,8 +164,10 @@ func _ready() -> void:
 							# Sets the found tile type in the house grid
 							house_grid[house_y][house_x][room_y][room_x]["object_type"] = type
 							house_grid[house_y][house_x][room_y][room_x]["object"] = furniture_object
+							house_grid[house_y][house_x][room_y][room_x]["atlas_coords"] = atlas_coords
 							
 							# Sets the connected tiles for the tile type in the house grid
+							
 							for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
 								house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object_type"] = type
 							
@@ -178,6 +180,125 @@ func _ready() -> void:
 	# Test
 	#var new_lamp_object = object_classes.lamp_object.new()
 	#print(new_lamp_object.type)
+
+
+# Checks if the tile we want to move to is not an object, is a floor tile, and is not directly adfjacent to a door. 
+func find_empty_tile(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords) -> bool:
+	
+	# Out of bounds checks.
+	if room_y + movement_y < 0 or room_y + movement_y > 8:
+		return false
+	
+	if room_x + movement_x < 0 or room_x + movement_x > 10:
+		return false
+	
+	if atlas_coords != null:
+		for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
+			if room_y + connected_tile.y + movement_y < 0 or room_y + connected_tile.y + movement_y > 8:
+				return false
+			
+			if room_x + connected_tile.x + movement_x < 0 or room_x + connected_tile.x + movement_x > 10:
+				return false
+	
+	# Check if the tile we want to move to is not an object and is a floor
+	if house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["object_type"] != null or house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["type"] != "floor":
+		return false
+	
+	# Check if the tile we want to move to is not an object and is a floor for the connected tiles 
+	if atlas_coords != null:
+		for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
+			if house_grid[house_y][house_x][room_y + connected_tile.y + movement_y][room_x + connected_tile.x + movement_x]["object_type"] != null or house_grid[house_y][house_x][room_y + connected_tile.y + movement_y][room_x + connected_tile.x + movement_x]["type"] != "floor":
+				return false
+
+	# Check that the tiles directly down, up, right, and left are not doors. 
+	if room_y + movement_y + 1 < 9 and house_grid[house_y][house_x][room_y + movement_y + 1][room_x + movement_x]["type"] == "door_s":
+		return false
+	
+	if room_y + movement_y - 1 > 0 and house_grid[house_y][house_x][room_y + movement_y - 1][room_x + movement_x]["type"] == "door_n":
+		return false
+	
+	if room_x + movement_x + 1 < 11 and house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x + 1]["type"] == "door_e":
+		return false
+
+	if room_x + movement_x - 1 > 0 and house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x - 1]["type"] == "door_w":
+		return false
+
+	# Return if tile is empty (true) or not (false)
+	return true
+
+
+# This function moves the object and its connected tiles to a new tile. 
+func move_object(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords) -> void:
+	
+	# Set the new tile to the objects type and atlas coords.
+	house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["object_type"] == type
+	house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["atlas_coords"] == atlas_coords
+	
+	# Set the previous tile to be null (empty).
+	house_grid[house_y][house_x][room_y][room_x]["object_type"] == null
+	house_grid[house_y][house_x][room_y][room_x]["atlas_coords"] == null
+	
+	# Set the connected tiles new tiles to the objects type and set their previous tiles to be null (empty).
+	if atlas_coords != null:
+		for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
+			house_grid[house_y][house_x][room_y + movement_y + connected_tile.y][room_x + movement_x + connected_tile.x]["object_type"] = type
+			house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object_type"] = null
+
+
+# Iterates over 
+func check_objects_to_move(variation) -> void:
+	
+	var rng = RandomNumberGenerator.new()
+	
+	# Iterates over each room in the house
+	for house_y in range(HOUSE_SIZE.y):
+		for house_x in range(HOUSE_SIZE.x):
+			
+			# Iterates over each tile in each room
+			for room_y in range(ROOM_SIZE_Y):
+				for room_x in range(ROOM_SIZE_X):
+					
+					# Store tiles type and atlas coords temporarily
+					var type = house_grid[house_y][house_x][room_y][room_x]["object_type"]
+					var atlas_coords = house_grid[house_y][house_x][room_y][room_x]["atlas_coords"]
+					
+					# Check if object on tile
+					if type != null:
+						
+						var movement_x
+						var movement_y 
+						var moved = false
+						
+						var iterations = 0
+						
+						while moved == false and iterations < 8:
+							movement_y = rng.randi_range(-variation,variation)
+							movement_x = rng.randi_range(-variation,variation)
+							
+							if find_empty_tile(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords) and moved == false:
+								move_object(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords)
+								moved == true
+								
+								# Test
+								print("Object: ", type, " moved from (", room_y, " , ", room_x, ") to (", room_y + movement_y, " , ", room_x + movement_x, ").")
+								
+								break
+							
+							#Test
+							if room_y + movement_y < 9 and room_y + movement_y > 0 and room_x + movement_x < 11 and room_x + movement_x > 0:
+								print("Couldnt move object to tile (", room_y + movement_y, " , ", room_x + movement_x, ") due to a ", house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["object_type"], house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["type"], " blocking the tile.")
+							else:
+								print("Couldnt move object to tile (", room_y + movement_y, " , ", room_x + movement_x, ").")
+								
+							iterations += 1
+
+# randomly moves objects in the rooms with later days having larger variation in object placement. 
+func object_movement_and_variation(day) -> void:
+	
+	if day == 0 or day == 1:
+		return
+	else:
+		check_objects_to_move(day)
 
 
 # Updates day-sensitive events (tasks, shadow progression, etc.)
@@ -234,6 +355,7 @@ func _input(event: InputEvent) -> void:
 	# TEST
 	if event.as_text() == "Space" and event.is_pressed():
 		new_day()
+		object_movement_and_variation(day)
 
 
 # Toggles the task list
