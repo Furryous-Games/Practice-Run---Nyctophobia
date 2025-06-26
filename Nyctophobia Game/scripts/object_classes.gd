@@ -23,8 +23,13 @@ func get_object_from_furniture_type(type) -> Object:
 		"dining_table": null,
 	} [type]
 
-class lamp_object:
-	var type := "lamp"
+class object: 
+	var position := Vector2i(-1,-1)
+	var type := "null_object"
+	var connected_tiles := []
+	var connected := false
+
+class lamp_object extends object:
 	var is_enabled := false
 	
 	func interact() -> void:

@@ -61,7 +61,7 @@ func _input(event: InputEvent) -> void:
 		var expected_tile_pos: Vector2i = player_pos + expected_movement[0]
 		var expected_tile_metadata: Dictionary = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 		
-		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object_type"] != null and expected_tile_metadata["object_type"] not in main_script.WALKABLE_OBJECTS):
+		if expected_tile_metadata["type"] != "floor" or (expected_tile_metadata["object"] != null and expected_tile_metadata["object"].type not in main_script.WALKABLE_OBJECTS):
 			# Sets the animation according to the action
 			match dir:
 				&"move_up": player_sprite.animation = "walk_up"

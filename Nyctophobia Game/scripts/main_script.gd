@@ -118,10 +118,8 @@ func _ready() -> void:
 					# Creates a default tile within the room
 					house_grid[room_y][room_x][-1].append({
 						"brightness": 6,
-						"object_type": null,
 						"object": null,
 						"type": null,
-						"atlas_coords": null,
 					})
 	
 	# Creates variables to hold the atlas coords and tile type
@@ -157,20 +155,32 @@ func _ready() -> void:
 					
 					# Finds which type of building the tile is
 					for type in FURNITURE_TYPE_BY_ATLAS_COORDS.keys():
-						if atlas_coords in FURNITURE_TYPE_BY_ATLAS_COORDS[type].keys():
+						if atlas_coords in FURNITURE_TYPE_BY_ATLAS_COORDS[type].keys() and house_grid[house_y][house_x][room_y][room_x]["object"] == null:
 							# Creates a new object class for the object depending on its type
-							var furniture_object = object_classes.get_object_from_furniture_type(type)
+							match type:
+								"lamp":
+									house_grid[house_y][house_x][room_y][room_x]["object"] = object_classes.lamp_object.new()
+								
+								_: 
+									house_grid[house_y][house_x][room_y][room_x]["object"] = object_classes.object.new()
 							
-							# Sets the found tile type in the house grid
-							house_grid[house_y][house_x][room_y][room_x]["object_type"] = type
-							house_grid[house_y][house_x][room_y][room_x]["object"] = furniture_object
-							house_grid[house_y][house_x][room_y][room_x]["atlas_coords"] = atlas_coords
+							house_grid[house_y][house_x][room_y][room_x]["object"].type = type
+							house_grid[house_y][house_x][room_y][room_x]["object"].position = Vector2i(room_y,room_x)
 							
 							# Sets the connected tiles for the tile type in the house grid
 							
 							for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
-								house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object_type"] = type
-							
+								
+								house_grid[house_y][house_x][room_y][room_x]["object"].connected_tiles.append(Vector2i(room_y + connected_tile.y, room_x + connected_tile.x))
+								
+								match type:
+									
+									_: 
+										house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object"] = object_classes.object.new()
+									
+								house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object"].type = type
+								house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object"].connected = true
+								
 							break
 	
 	shadow_tilemap.update_shadows()
