@@ -74,8 +74,8 @@ func update_shadows():
 				and new_tile_location.y < len(room_metadata)
 				and new_tile_location.x >= 0 
 				and new_tile_location.x < len(room_metadata[new_tile_location.y])
-				and room_metadata[new_tile_location.y][new_tile_location.x]["object_type"] != null
-				and room_metadata[new_tile_location.y][new_tile_location.x]["object_type"] not in main_script.WALKABLE_OBJECTS
+				and room_metadata[new_tile_location.y][new_tile_location.x]["object"] != null
+				and room_metadata[new_tile_location.y][new_tile_location.x]["object"].type not in main_script.WALKABLE_OBJECTS
 		):
 			# Highlight the object's tile
 			cap_tile_brightness(new_tile_location, 5)
@@ -83,7 +83,7 @@ func update_shadows():
 	# Highlight important objects as defined in the main script
 	for room_y in range(len(previous_room)):
 		for room_x in range(len(previous_room[room_y])):
-			if previous_room[room_y][room_x]["object_type"] in main_script.highlighted_objects:
+			if previous_room[room_y][room_x]["object"] != null and previous_room[room_y][room_x]["object"].type in main_script.highlighted_objects:
 				cap_tile_brightness(Vector2i(room_x, room_y), 5)
 	
 	# Update the shadows for the walls
@@ -171,7 +171,7 @@ func set_emissions():
 			# Only affects window tiles
 			if room_metadata[room_y][room_x]["type"] == "window":
 				update_emissions_for_tile(Vector2(room_x, room_y), main_script.window_emission)
-			elif room_metadata[room_y][room_x]["object_type"] == "lamp" and room_metadata[room_y][room_x]["object"].is_enabled:
+			elif room_metadata[room_y][room_x]["object"] != null and room_metadata[room_y][room_x]["object"].type == "lamp" and room_metadata[room_y][room_x]["object"].is_enabled:
 				update_emissions_for_tile(Vector2(room_x, room_y), main_script.lamp_emission)
 
 
