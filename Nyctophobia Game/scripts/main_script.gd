@@ -165,13 +165,13 @@ func _ready() -> void:
 									house_grid[house_y][house_x][room_y][room_x]["object"] = object_classes.object.new()
 							
 							house_grid[house_y][house_x][room_y][room_x]["object"].type = type
-							house_grid[house_y][house_x][room_y][room_x]["object"].position = Vector2i(room_y,room_x)
+							house_grid[house_y][house_x][room_y][room_x]["object"].position = Vector2i(room_x, room_y)
 							
 							# Sets the connected tiles for the tile type in the house grid
 							
 							for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
 								
-								house_grid[house_y][house_x][room_y][room_x]["object"].connected_tiles.append(Vector2i(room_y + connected_tile.y, room_x + connected_tile.x))
+								house_grid[house_y][house_x][room_y][room_x]["object"].connected_tiles.append(Vector2i(room_x + connected_tile.x, room_y + connected_tile.y))
 								
 								match type:
 									
@@ -187,72 +187,215 @@ func _ready() -> void:
 	
 	new_day()
 	
-	# Test
+	# TEST
 	#var new_lamp_object = object_classes.lamp_object.new()
 	#print(new_lamp_object.type)
 
 
 # Checks if the tile we want to move to is not an object, is a floor tile, and is not directly adfjacent to a door. 
-func find_empty_tile(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords) -> bool:
+func find_empty_tile(object, house_y, house_x, movement) -> bool:
+	
+	var new_pos = object.position + movement
 	
 	# Out of bounds checks.
-	if room_y + movement_y < 0 or room_y + movement_y > 8:
+	if (new_pos.y < 0 
+	or new_pos.y > 8
+	or new_pos.x < 0 
+	or new_pos.x > 10):
+		
+		# TEST
+		print("Couldnt move ", object.type, " to out of bounds tile ", new_pos, ".")
+		
+		return false
+		
+	# Check if the tile we want to move to is not an object and is a floor
+	if house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"] != null or house_grid[house_y][house_x][new_pos.y][new_pos.x]["type"] != "floor":
+		
+		#TEST
+		if house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"] != null:
+			print("Couldnt move ", object.type, " to tile ", new_pos, " due to a ", house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].type, " blocking the tile.")
+		else:
+			print("Couldnt move ", object.type, " to tile ", new_pos, " due to a ", house_grid[house_y][house_x][new_pos.y][new_pos.x]["type"], " blocking the tile.")
+		
 		return false
 	
-	if room_x + movement_x < 0 or room_x + movement_x > 10:
+	# Check that the tiles directly down, up, right, and left are not doors. 
+	if (house_grid[house_y][house_x][new_pos.y + 1][new_pos.x]["type"] == "door_s"
+	or house_grid[house_y][house_x][new_pos.y - 1][new_pos.x]["type"] == "door_n"
+	or house_grid[house_y][house_x][new_pos.y][new_pos.x + 1]["type"] == "door_e"
+	or house_grid[house_y][house_x][new_pos.y][new_pos.x - 1]["type"] == "door_w"):
+		
+		#TEST
+		print("Couldnt move ", object.type, " to tile ", new_pos, " due to a ", house_grid[house_y][house_x][new_pos.y + 1][new_pos.x]["type"], " blocking the tile.")
+		
 		return false
 	
-	if atlas_coords != null:
-		for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
-			if room_y + connected_tile.y + movement_y < 0 or room_y + connected_tile.y + movement_y > 8:
+	var new_connected 
+	
+	# Repeat the abouve process for each connected tile.
+	if !object.connected_tiles.is_empty():
+		for connected_tile in object.connected_tiles:
+			
+			new_connected = connected_tile + movement
+			
+			#TEST
+			print("connected_tile: ", connected_tile, " + movement: ", movement, " = New connected tile: ", new_connected)
+			
+			# Out of bounds checks.
+			if (new_connected.y < 0 
+				or new_connected.y > 8
+				or new_connected.x < 0 
+				or new_connected.x > 10):
+				#TEST
+				print("Couldnt move connected ", object.type, " to out of bounds tile ", new_connected, ".")
+				
 				return false
 			
-			if room_x + connected_tile.x + movement_x < 0 or room_x + connected_tile.x + movement_x > 10:
+			# Check if the tile we want to move to is not an object and is a floor
+			if (house_grid[house_y][house_x][new_connected.y][new_connected.x]["object"] != null 
+			or house_grid[house_y][house_x][new_connected.y][new_connected.x]["type"] != "floor"):
+				
+				#TEST
+				if house_grid[house_y][house_x][new_connected.y][new_connected.x]["object"] != null:
+					print("Couldnt move connected ", object.type, " to tile ", new_connected, " due to a ", house_grid[house_y][house_x][new_connected.y][new_connected.x]["object"].type, " blocking the tile.")
+				else:
+					print("Couldnt move connected ", object.type, " to tile ", new_connected, " due to a ", house_grid[house_y][house_x][new_connected.y][new_connected.x]["type"], " blocking the tile.")
+				
+				return false
+			
+			# Check that the tiles directly down, up, right, and left are not doors. 
+			if (house_grid[house_y][house_x][new_connected.y + 1][new_connected.x]["type"] == "door_s"
+			or house_grid[house_y][house_x][new_connected.y - 1][new_connected.x]["type"] == "door_n"
+			or house_grid[house_y][house_x][new_connected.y][new_connected.x + 1]["type"] == "door_e"
+			or house_grid[house_y][house_x][new_connected.y][new_connected.x - 1]["type"] == "door_w"):
+				
+				#TEST
+				print("Couldnt move connected ", object.type, " to tile ", new_connected, " due to a ", house_grid[house_y][house_x][new_connected.y][new_connected.x]["type"], " blocking the tile.")
+				
 				return false
 	
-	# Check if the tile we want to move to is not an object and is a floor
-	if house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["object_type"] != null or house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["type"] != "floor":
-		return false
-	
-	# Check if the tile we want to move to is not an object and is a floor for the connected tiles 
-	if atlas_coords != null:
-		for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
-			if house_grid[house_y][house_x][room_y + connected_tile.y + movement_y][room_x + connected_tile.x + movement_x]["object_type"] != null or house_grid[house_y][house_x][room_y + connected_tile.y + movement_y][room_x + connected_tile.x + movement_x]["type"] != "floor":
-				return false
-
-	# Check that the tiles directly down, up, right, and left are not doors. 
-	if room_y + movement_y + 1 < 9 and house_grid[house_y][house_x][room_y + movement_y + 1][room_x + movement_x]["type"] == "door_s":
-		return false
-	
-	if room_y + movement_y - 1 > 0 and house_grid[house_y][house_x][room_y + movement_y - 1][room_x + movement_x]["type"] == "door_n":
-		return false
-	
-	if room_x + movement_x + 1 < 11 and house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x + 1]["type"] == "door_e":
-		return false
-
-	if room_x + movement_x - 1 > 0 and house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x - 1]["type"] == "door_w":
-		return false
-
-	# Return if tile is empty (true) or not (false)
+	# Return if tile is empty (true)
 	return true
 
 
 # This function moves the object and its connected tiles to a new tile. 
-func move_object(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords) -> void:
+func move_object(object, house_y, house_x, movement) -> void:
 	
-	# Set the new tile to the objects type and atlas coords.
-	house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["object_type"] == type
-	house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["atlas_coords"] == atlas_coords
+	var new_pos = object.position + movement
 	
-	# Set the previous tile to be null (empty).
-	house_grid[house_y][house_x][room_y][room_x]["object_type"] == null
-	house_grid[house_y][house_x][room_y][room_x]["atlas_coords"] == null
+	# Place the object on the new tile.
+	house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"] = object
 	
-	# Set the connected tiles new tiles to the objects type and set their previous tiles to be null (empty).
-	if atlas_coords != null:
-		for connected_tile in FURNITURE_TYPE_BY_ATLAS_COORDS[type][atlas_coords]:
-			house_grid[house_y][house_x][room_y + movement_y + connected_tile.y][room_x + movement_x + connected_tile.x]["object_type"] = type
-			house_grid[house_y][house_x][room_y + connected_tile.y][room_x + connected_tile.x]["object_type"] = null
+	# Update the objects new position.
+	house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].position = new_pos
+	
+	# Update and place the objects connected tiles.
+	if !object.connected_tiles.is_empty():
+		
+		# Update
+		for connected_tile in object.connected_tiles:
+			var index = object.connected_tiles.find(connected_tile)
+			
+			
+			house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].connected_tiles[index] += movement
+		
+		#Place
+		for connected_tile in house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].connected_tiles:
+			
+			match object.type:
+				
+				_: 
+					house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"] = object_classes.object.new()
+				
+			house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"].type = object.type
+			house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"].connected = true
+
+
+func deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x) -> void:
+	
+	if (room_y < 0 
+	or room_y > 8
+	or room_x < 0 
+	or room_x > 10
+	or house_grid[house_y][house_x][room_y][room_x]["type"] != "floor"
+	or house_grid[house_y][house_x][room_y][room_x]["object"] != null
+	or visited_tiles.has(Vector2i(room_x, room_y))):
+		return 
+	
+	visited_tiles.append(Vector2i(room_x, room_y))
+	
+	if (house_grid[house_y][house_x][room_y - 1][room_x]["type"] == "door_n"
+	or house_grid[house_y][house_x][room_y + 1][room_x]["type"] == "door_s"
+	or house_grid[house_y][house_x][room_y][room_x + 1]["type"] == "door_e"
+	or house_grid[house_y][house_x][room_y][room_x - 1]["type"] == "door_w"):
+		door_list.append(Vector2i(room_x, room_y))
+	
+	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y + 1, room_x)
+	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y - 1, room_x)
+	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x + 1)
+	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x - 1)
+	
+	
+func flood_fill_path(house_y, house_x) -> bool:
+	
+	var found: bool
+	var door_list = []
+	var visited_tiles = []
+	
+	# Finds a door in the room to begin the flood search. 
+	for room_y in range(ROOM_SIZE_Y):
+		for room_x in range(ROOM_SIZE_X): 
+			match house_grid[house_y][house_x][room_y][room_x]["type"]:
+				"door_n":
+					deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y + 1, room_x)
+					found = true
+					break
+				"door_s":
+					deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y - 1, room_x)
+					found = true
+					break
+				"door_w":
+					deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x + 1)
+					found = true
+					break
+				"door_e":
+					deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x - 1)
+					found = true
+					break
+		if found:
+			break
+	
+	if door_list.size() == 4:
+		print ("Path found!")
+		return true
+	
+	print("Path not found.")
+	return false
+
+
+func clear_room_make_list(object_list, house_y, house_x) -> void:
+	# Iterates over each tile in each room
+	for room_y in range(ROOM_SIZE_Y):
+		for room_x in range(ROOM_SIZE_X):
+			
+			if (
+				house_grid[house_y][house_x][room_y][room_x]["object"] != null 
+				and house_grid[house_y][house_x][room_y][room_x]["object"].connected == false
+				and house_grid[house_y][house_x][room_y][room_x]["object"].type != "bed"
+				):
+				object_list.append(house_grid[house_y][house_x][room_y][room_x]["object"])
+				
+				if !house_grid[house_y][house_x][room_y][room_x]["object"].connected_tiles.is_empty():
+					
+					for connected_tile in house_grid[house_y][house_x][room_y][room_x]["object"].connected_tiles:
+						house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"] = null
+					
+				house_grid[house_y][house_x][room_y][room_x]["object"] = null
+	
+	#TEST
+	print("Added objects to object_list:")
+	for object in object_list:
+		print(object.type)
 
 
 # Iterates over 
@@ -260,47 +403,63 @@ func check_objects_to_move(variation) -> void:
 	
 	var rng = RandomNumberGenerator.new()
 	
+	var object_list = []
+	
+	var movement_variation = []
+	
+	for i in range(-variation,variation+1):
+		for j in range(-variation,variation+1):
+			movement_variation.append(Vector2i(i,j))
+	
 	# Iterates over each room in the house
 	for house_y in range(HOUSE_SIZE.y):
 		for house_x in range(HOUSE_SIZE.x):
 			
-			# Iterates over each tile in each room
-			for room_y in range(ROOM_SIZE_Y):
-				for room_x in range(ROOM_SIZE_X):
-					
-					# Store tiles type and atlas coords temporarily
-					var type = house_grid[house_y][house_x][room_y][room_x]["object_type"]
-					var atlas_coords = house_grid[house_y][house_x][room_y][room_x]["atlas_coords"]
-					
-					# Check if object on tile
-					if type != null:
-						
-						var movement_x
-						var movement_y 
-						var moved = false
-						
-						var iterations = 0
-						
-						while moved == false and iterations < 8:
-							movement_y = rng.randi_range(-variation,variation)
-							movement_x = rng.randi_range(-variation,variation)
+			object_list = []
+			
+			clear_room_make_list(object_list, house_y, house_x)
+			
+			var path_found = false
+			
+			while !path_found:
+				
+				# TEST
+				print("Attemping to shuffle room : (", house_x, " , ", house_y, ").")
+				
+				for object in object_list:
+					var moved = false
+					var index
+					var movement
+					var movement_attemps = movement_variation.duplicate(true)
+				
+					while moved == false and !movement_variation.is_empty():
+						index = randi_range(0, movement_attemps.size()-1)
 							
-							if find_empty_tile(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords) and moved == false:
-								move_object(house_y, house_x, room_y, room_x, movement_y, movement_x, type, atlas_coords)
-								moved == true
-								
-								# Test
-								print("Object: ", type, " moved from (", room_y, " , ", room_x, ") to (", room_y + movement_y, " , ", room_x + movement_x, ").")
-								
-								break
+						movement =  movement_attemps[index]
+						
+						#TEST
+						var old_pos = object.position
+						
+						if find_empty_tile(object, house_y, house_x, movement) and moved == false:
+							move_object(object, house_y, house_x, movement)
+							moved == true
 							
-							#Test
-							if room_y + movement_y < 9 and room_y + movement_y > 0 and room_x + movement_x < 11 and room_x + movement_x > 0:
-								print("Couldnt move object to tile (", room_y + movement_y, " , ", room_x + movement_x, ") due to a ", house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["object_type"], house_grid[house_y][house_x][room_y + movement_y][room_x + movement_x]["type"], " blocking the tile.")
-							else:
-								print("Couldnt move object to tile (", room_y + movement_y, " , ", room_x + movement_x, ").")
-								
-							iterations += 1
+							# TEST
+							print("Object: ", object.type, " moved from ", old_pos, " to ", old_pos + movement, ".")
+							
+							break
+						
+						movement_attemps.remove_at(index)
+						if movement_attemps.is_empty():
+							break
+				
+				if flood_fill_path(house_y, house_x):
+					path_found == true
+					break
+				
+				object_list = []
+				
+				clear_room_make_list(object_list, house_y, house_x)
 
 # randomly moves objects in the rooms with later days having larger variation in object placement. 
 func object_movement_and_variation(day) -> void:

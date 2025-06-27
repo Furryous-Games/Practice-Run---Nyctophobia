@@ -112,7 +112,7 @@ func _input(event: InputEvent) -> void:
 				expected_tile_metadata = main_script.house_grid[main_script.curr_room[1]][main_script.curr_room[0]][expected_tile_pos[1]][expected_tile_pos[0]]
 				
 				# Checks if the player can interact with the object
-				if expected_tile_metadata["object"] != null:
+				if expected_tile_metadata["object"] != null and expected_tile_metadata["object"].has_method("interact"):
 					expected_tile_metadata["object"].interact()
 					
 					# Updates the room's shadows
