@@ -6,7 +6,7 @@
 [ext_resource type="Texture2D" uid="uid://eo78cblja8g0" path="res://assets/sprites/square_shader.png" id="4_85g3d"]
 [ext_resource type="Script" uid="uid://h1ty80jyu3kw" path="res://scripts/shadow_tilemap.gd" id="5_choun"]
 [ext_resource type="PackedScene" uid="uid://bn6ku55hacl74" path="res://scenes/player.tscn" id="6_ya4ey"]
-[ext_resource type="LabelSettings" uid="uid://dov7nku1llp15" path="res://assets/label_settings/task_lebel.tres" id="7_o6xl0"]
+[ext_resource type="LabelSettings" uid="uid://cnk3jixgfgif7" path="res://assets/label_settings/ui_text.tres" id="7_o6xl0"]
 
 [sub_resource type="TileSetAtlasSource" id="TileSetAtlasSource_iw1gg"]
 texture = ExtResource("2_o6xl0")
@@ -160,8 +160,8 @@ sources/0 = SubResource("TileSetAtlasSource_qgukd")
 
 [sub_resource type="StyleBoxFlat" id="StyleBoxFlat_o6xl0"]
 bg_color = Color(0.0846899, 0.0846899, 0.0846899, 0.862745)
-border_width_right = 6
-border_width_bottom = 6
+border_width_right = 2
+border_width_bottom = 2
 border_color = Color(0.359069, 0.359069, 0.359069, 0.901961)
 corner_detail = 1
 
@@ -197,33 +197,29 @@ one_shot = true
 [node name="UI" type="CanvasLayer" parent="."]
 
 [node name="TaskPanel" type="Panel" parent="UI"]
-offset_left = -100.0
-offset_right = 429.0
-offset_bottom = 318.0
-scale = Vector2(0.17, 0.17)
+offset_left = -120.0
+offset_right = 50.0
+offset_bottom = 68.0
+scale = Vector2(0.7, 0.7)
 theme_override_styles/panel = SubResource("StyleBoxFlat_o6xl0")
 
 [node name="Heading" type="Label" parent="UI/TaskPanel"]
 layout_mode = 2
-offset_left = 12.0
-offset_top = 6.0
-offset_right = 526.0
-offset_bottom = 62.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 44.0
+offset_bottom = 16.0
 label_settings = ExtResource("7_o6xl0")
 
 [node name="TaskListDisplay" type="VBoxContainer" parent="UI/TaskPanel"]
 layout_mode = 2
-offset_left = 12.0
-offset_top = 71.0
-offset_right = 529.0
-offset_bottom = 294.0
+offset_left = 4.0
+offset_top = 17.0
+offset_right = 167.0
+offset_bottom = 66.0
 
 [node name="AutoToggle" type="Timer" parent="UI"]
-wait_time = 4.0
-one_shot = true
-
-[node name="UpdateTaskList" type="Timer" parent="UI"]
-wait_time = 0.7
+wait_time = 5.0
 one_shot = true
 
 [node name="ScreenFade" type="ColorRect" parent="UI"]
@@ -234,13 +230,12 @@ color = Color(0, 0, 0, 1)
 [node name="Day" type="Label" parent="UI/ScreenFade"]
 self_modulate = Color(1, 1, 1, 0)
 layout_mode = 0
-offset_left = 97.0
-offset_top = 81.0
-offset_right = 194.0
-offset_bottom = 137.0
-scale = Vector2(0.3, 0.3)
+offset_left = 88.0
+offset_top = 80.0
+offset_right = 118.0
+offset_bottom = 96.0
+scale = Vector2(1.5, 1.5)
 label_settings = ExtResource("7_o6xl0")
 
 [connection signal="timeout" from="SequenceTimer" to="." method="_on_sequence_timeout"]
 [connection signal="timeout" from="UI/AutoToggle" to="." method="_on_auto_toggle_timeout"]
-[connection signal="timeout" from="UI/UpdateTaskList" to="." method="_on_update_task_list_timeout"]

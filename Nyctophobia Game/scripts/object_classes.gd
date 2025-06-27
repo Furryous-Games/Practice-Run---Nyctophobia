@@ -1,4 +1,3 @@
-class_name Objects
 extends Node
 
 func get_object_from_furniture_type(type) -> Object:

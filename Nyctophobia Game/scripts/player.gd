@@ -126,9 +126,6 @@ func _input(event: InputEvent) -> void:
 					if tile_object.type in main_script.task_list:
 						tile_object.interact()
 						main_script.complete_task(tile_object.type)
-						
-					elif tile_object.type == "bed":
-						pass
 					
 					elif tile_object.type == "lamp":
 						tile_object.interact()

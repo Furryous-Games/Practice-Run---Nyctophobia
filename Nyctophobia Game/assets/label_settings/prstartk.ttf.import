@@ -2,13 +2,13 @@
 
 importer="font_data_dynamic"
 type="FontFile"
-uid="uid://der5snx03t7ue"
-path="res://.godot/imported/Gbboot-ALpM.ttf-528862bbe87eea0c6ccc2c1bd86cd3e5.fontdata"
+uid="uid://bh5bx0xte2ujl"
+path="res://.godot/imported/prstartk.ttf-03b3e34a903d114b73de62994acb4094.fontdata"
 
 [deps]
 
-source_file="res://assets/label_settings/Gbboot-ALpM.ttf"
-dest_files=["res://.godot/imported/Gbboot-ALpM.ttf-528862bbe87eea0c6ccc2c1bd86cd3e5.fontdata"]
+source_file="res://assets/label_settings/prstartk.ttf"
+dest_files=["res://.godot/imported/prstartk.ttf-03b3e34a903d114b73de62994acb4094.fontdata"]
 
 [params]
 
