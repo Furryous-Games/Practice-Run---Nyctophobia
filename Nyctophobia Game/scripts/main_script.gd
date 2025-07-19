@@ -160,7 +160,8 @@ func _ready() -> void:
 							match type:
 								"lamp":
 									house_grid[house_y][house_x][room_y][room_x]["object"] = object_classes.lamp_object.new()
-								
+								"bed":
+									house_grid[house_y][house_x][room_y][room_x]["object"] = object_classes.bed_object.new()
 								_: 
 									house_grid[house_y][house_x][room_y][room_x]["object"] = object_classes.object.new()
 							
@@ -202,21 +203,10 @@ func find_empty_tile(object, house_y, house_x, movement) -> bool:
 	or new_pos.y > 8
 	or new_pos.x < 0 
 	or new_pos.x > 10):
-		
-		# TEST
-		print("Couldnt move ", object.type, " to out of bounds tile ", new_pos, ".")
-		
 		return false
 		
 	# Check if the tile we want to move to is not an object and is a floor
 	if house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"] != null or house_grid[house_y][house_x][new_pos.y][new_pos.x]["type"] != "floor":
-		
-		#TEST
-		if house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"] != null:
-			print("Couldnt move ", object.type, " to tile ", new_pos, " due to a ", house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].type, " blocking the tile.")
-		else:
-			print("Couldnt move ", object.type, " to tile ", new_pos, " due to a ", house_grid[house_y][house_x][new_pos.y][new_pos.x]["type"], " blocking the tile.")
-		
 		return false
 	
 	# Check that the tiles directly down, up, right, and left are not doors. 
@@ -224,10 +214,6 @@ func find_empty_tile(object, house_y, house_x, movement) -> bool:
 	or house_grid[house_y][house_x][new_pos.y - 1][new_pos.x]["type"] == "door_n"
 	or house_grid[house_y][house_x][new_pos.y][new_pos.x + 1]["type"] == "door_e"
 	or house_grid[house_y][house_x][new_pos.y][new_pos.x - 1]["type"] == "door_w"):
-		
-		#TEST
-		print("Couldnt move ", object.type, " to tile ", new_pos, " due to a ", house_grid[house_y][house_x][new_pos.y + 1][new_pos.x]["type"], " blocking the tile.")
-		
 		return false
 	
 	var new_connected 
@@ -235,32 +221,18 @@ func find_empty_tile(object, house_y, house_x, movement) -> bool:
 	# Repeat the abouve process for each connected tile.
 	if !object.connected_tiles.is_empty():
 		for connected_tile in object.connected_tiles:
-			
 			new_connected = connected_tile + movement
-			
-			#TEST
-			print("connected_tile: ", connected_tile, " + movement: ", movement, " = New connected tile: ", new_connected)
 			
 			# Out of bounds checks.
 			if (new_connected.y < 0 
 				or new_connected.y > 8
 				or new_connected.x < 0 
 				or new_connected.x > 10):
-				#TEST
-				print("Couldnt move connected ", object.type, " to out of bounds tile ", new_connected, ".")
-				
 				return false
 			
 			# Check if the tile we want to move to is not an object and is a floor
 			if (house_grid[house_y][house_x][new_connected.y][new_connected.x]["object"] != null 
 			or house_grid[house_y][house_x][new_connected.y][new_connected.x]["type"] != "floor"):
-				
-				#TEST
-				if house_grid[house_y][house_x][new_connected.y][new_connected.x]["object"] != null:
-					print("Couldnt move connected ", object.type, " to tile ", new_connected, " due to a ", house_grid[house_y][house_x][new_connected.y][new_connected.x]["object"].type, " blocking the tile.")
-				else:
-					print("Couldnt move connected ", object.type, " to tile ", new_connected, " due to a ", house_grid[house_y][house_x][new_connected.y][new_connected.x]["type"], " blocking the tile.")
-				
 				return false
 			
 			# Check that the tiles directly down, up, right, and left are not doors. 
@@ -268,10 +240,6 @@ func find_empty_tile(object, house_y, house_x, movement) -> bool:
 			or house_grid[house_y][house_x][new_connected.y - 1][new_connected.x]["type"] == "door_n"
 			or house_grid[house_y][house_x][new_connected.y][new_connected.x + 1]["type"] == "door_e"
 			or house_grid[house_y][house_x][new_connected.y][new_connected.x - 1]["type"] == "door_w"):
-				
-				#TEST
-				print("Couldnt move connected ", object.type, " to tile ", new_connected, " due to a ", house_grid[house_y][house_x][new_connected.y][new_connected.x]["type"], " blocking the tile.")
-				
 				return false
 	
 	# Return if tile is empty (true)
@@ -291,22 +259,15 @@ func move_object(object, house_y, house_x, movement) -> void:
 	
 	# Update and place the objects connected tiles.
 	if !object.connected_tiles.is_empty():
-		
 		# Update
 		for connected_tile in object.connected_tiles:
 			var index = object.connected_tiles.find(connected_tile)
-			
-			
 			house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].connected_tiles[index] += movement
-		
 		#Place
 		for connected_tile in house_grid[house_y][house_x][new_pos.y][new_pos.x]["object"].connected_tiles:
-			
 			match object.type:
-				
 				_: 
 					house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"] = object_classes.object.new()
-				
 			house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"].type = object.type
 			house_grid[house_y][house_x][connected_tile.y][connected_tile.x]["object"].connected = true
 
@@ -334,8 +295,8 @@ func deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_
 	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y - 1, room_x)
 	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x + 1)
 	deep_flood_search(door_list, visited_tiles, house_y, house_x, room_y, room_x - 1)
-	
-	
+
+
 func flood_fill_path(house_y, house_x) -> bool:
 	
 	var found: bool
@@ -475,6 +436,9 @@ func new_day() -> void:
 	day += 1
 	ui_heading.text = "Day " + str(day) + ", TASKS:"
 	
+	## Randomizes objects in each room
+	object_movement_and_variation(day)
+	
 	## Randomizes Tasks
 	completed_tasks.clear()
 	task_list.clear()
@@ -521,11 +485,11 @@ func _input(event: InputEvent) -> void:
 			task_list.remove_at(0)
 			ui_list.get_child(0).free()
 	
+	"""
 	# TEST
 	if event.as_text() == "Space" and event.is_pressed():
 		new_day()
-		object_movement_and_variation(day)
-
+	"""
 
 # Toggles the task list
 func toggle_task_list() -> void:
